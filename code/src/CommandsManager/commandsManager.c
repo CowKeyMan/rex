@@ -21,7 +21,6 @@ void forkChild(char **paths, char **args, int bufferSize, bool wait){
             strncat(pathtmp, "/", bufferSize);
             strncat(pathtmp, args[0], bufferSize);
 
-			printf("%s\n", pathtmp);
             execv(pathtmp, args);
         }
         perror("Error");

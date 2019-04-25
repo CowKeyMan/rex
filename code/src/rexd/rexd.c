@@ -3,14 +3,21 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <sys/wait.h>
-#include <signal.h>
+#include <string.h>
 
 #include "../linenoise/linenoise.h"
 #include "../StringManipulator/StringManipulator.h"
+#include "../CommandsManager/commandsManager.h"
 
-#define STRING_BUFFER_SIZE 256
+#define STRING_BUFFER_SIZE 512
+#define STRING_BUFFER_AMOUNT 16
 
 void signalHandler(int signalNumber);
+
+//process the given line
+void computeLine(char* line);
+//set current working directory
+void resetCWD();
 
 //Signal handler struct
 //struct sigaction sa;
@@ -20,18 +27,76 @@ int stdinFileDescriptor;
 int stdoutFileDescriptor;
 int stderrFileDescriptor;
 
-char a[][STRING_BUFFER_SIZE] = {
-	"CURRENT WORKING DIRECTORY"
+char *paths[STRING_BUFFER_SIZE] = {
+	"CURRENT WORKING DIRECTORY",
 	"/usr/bin",
 	"/bin",
 	"/usr/local/bin"
 };
 
 int main(int argc, char *argv[]){
-	// open socket and listen to commands
+	resetCWD();
+
+	//Duplicate the default file descriptors
+    stdinFileDescriptor = dup(STDIN_FILENO);
+    stdoutFileDescriptor = dup(STDOUT_FILENO);
+    stderrFileDescriptor = dup(STDERR_FILENO);
+	
+	linenoiseHistorySetMaxLen(16);
+
+	//This loop terminates only when the exit function is used in the eggshell
+   	char* line;
+    while(true) {
+        line = linenoise("> ");
+
+        //Error prevention, otherwise a seg.fault is caused at CTRL+C during linenoise
+        if(line == NULL){
+            continue;
+        }
+
+        //Check for empty line or line with just spaces, in which case loop through again
+        if(isEmptyString(line, STRING_BUFFER_SIZE)){
+            continue;
+        }
+
+        linenoiseHistoryAdd(line);
+
+        //Otherwise, work on the line
+        computeLine(line);
+
+        //Free line for reuse
+        linenoiseFree(line);
+    }
+}
+
+void computeLine(char* line){
+	char *args[STRING_BUFFER_AMOUNT];
+	char *rexdArgs[STRING_BUFFER_AMOUNT];
+	splitStringBy(line, " ", args, STRING_BUFFER_AMOUNT);
+
+	if(strncmp("exit", args[0], STRING_BUFFER_SIZE) == 0){
+		exit(EXIT_SUCCESS);
+	}else if(strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0
+			|| strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0){
+		char *newDir = args[1];
+		if(changeCWD(newDir)){
+			resetCWD();		
+		}
+	}else if(strncmp("rexl", args[0], STRING_BUFFER_SIZE) == 0){
+		//do rex stuff
+	}else{
+		forkChild(paths, args, STRING_BUFFER_SIZE, true);
+	}
 }
 
 
+void resetCWD(){
+	char buffer[STRING_BUFFER_SIZE];
+	getcwd(buffer, STRING_BUFFER_SIZE);
+	paths[0] = (char*)malloc(STRING_BUFFER_SIZE * sizeof(char));
+	strncpy(paths[0], buffer, STRING_BUFFER_SIZE);
+	printf("CWD: %s\n", paths[0]);
+}
 
 
 
