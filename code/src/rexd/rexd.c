@@ -12,6 +12,9 @@
 #define STRING_BUFFER_SIZE 512
 #define STRING_BUFFER_AMOUNT 16
 
+#define CLIENT_PORT 5000
+#define SERVER_PORT 5001
+
 void signalHandler(int signalNumber);
 
 //process the given line
@@ -38,35 +41,12 @@ int main(int argc, char *argv[]){
 	resetCWD();
 
 	//Duplicate the default file descriptors
-    stdinFileDescriptor = dup(STDIN_FILENO);
-    stdoutFileDescriptor = dup(STDOUT_FILENO);
-    stderrFileDescriptor = dup(STDERR_FILENO);
-	
-	linenoiseHistorySetMaxLen(16);
+	stdinFileDescriptor = dup(STDIN_FILENO);
+	stdoutFileDescriptor = dup(STDOUT_FILENO);
+	stderrFileDescriptor = dup(STDERR_FILENO);
 
-	//This loop terminates only when the exit function is used in the eggshell
-   	char* line;
-    while(true) {
-        line = linenoise("> ");
 
-        //Error prevention, otherwise a seg.fault is caused at CTRL+C during linenoise
-        if(line == NULL){
-            continue;
-        }
 
-        //Check for empty line or line with just spaces, in which case loop through again
-        if(isEmptyString(line, STRING_BUFFER_SIZE)){
-            continue;
-        }
-
-        linenoiseHistoryAdd(line);
-
-        //Otherwise, work on the line
-        computeLine(line);
-
-        //Free line for reuse
-        linenoiseFree(line);
-    }
 }
 
 void computeLine(char* line){
