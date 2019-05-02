@@ -1,0 +1,8 @@
+#define CLIENT_PORT 5000
+#define SERVER_PORT 5001
+
+#define NETWORK_BUFFER_SIZE 256
+
+#define NETWORK_MAX_QUEUE 10
+
+#define NETWORK_MASTER "Daniel"

@@ -43,6 +43,8 @@ void startSocket();
 void listenAndAccept();
 void childProcess(int sock);
 
+bool isMaster = false;
+
 int main(int argc, char *argv[]){
 	resetCWD();
 
