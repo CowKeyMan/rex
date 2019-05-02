@@ -5,15 +5,13 @@
 #include <sys/wait.h>
 #include <string.h>
 
+#include "../NetworkOptions/networkOptions.h"
 #include "../linenoise/linenoise.h"
 #include "../StringManipulator/StringManipulator.h"
 #include "../CommandsManager/commandsManager.h"
 
-#define STRING_BUFFER_SIZE 512
+#define STRING_BUFFER_SIZE 256
 #define STRING_BUFFER_AMOUNT 16
-
-#define CLIENT_PORT 5000
-#define SERVER_PORT 5001
 
 void signalHandler(int signalNumber);
 
@@ -37,6 +35,14 @@ char *paths[STRING_BUFFER_SIZE] = {
 	"/usr/local/bin"
 };
 
+// socket stuff
+int sockfd, newsockfd, clilen, pid, n;
+struct sockaddr_in serv_addr, cli_addr;
+
+void startSocket();
+void listenAndAccept();
+void childProcess(int sock);
+
 int main(int argc, char *argv[]){
 	resetCWD();
 
@@ -45,30 +51,105 @@ int main(int argc, char *argv[]){
 	stdoutFileDescriptor = dup(STDOUT_FILENO);
 	stderrFileDescriptor = dup(STDERR_FILENO);
 
+	startSocket();
+	listenAndAccept();
+}
 
+void startSocket(){
+	// Create server socket (AF_INET, SOCK_STREAM)
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) , 0){
+		perror("ERROR opening socket");
+		exit(EXIT_FAILURE);
+	}
 
+	// Initialize socket structure
+	bzero((char *) &serv_addr, sizeof(serv_addr));
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(SERVER_PORT);
+	 
+	// Bind the host address
+	if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+		close(sockfd);
+		perror("ERROR on binding");
+		exit(EXIT_FAILURE);
+	}
+}
+
+void listenAndAccept(){
+	// Start listening for the clients
+	listen(sockfd, NETWORK_MAX_QUEUE);
+	 
+	 // Infinite loop
+	clilen = sizeof(cli_addr);
+	while (1) {
+		 
+		// Accept connection form a client
+		newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
+		
+		if (newsockfd < 0)  {
+			close(sockfd);
+			perror("ERROR on accept");
+			exit(EXIT_FAILURE);
+		}
+			
+		// Accept successful, fork a new process
+		pid = fork();
+
+		if (pid < 0) {
+			close(sockfd);
+			close(newsockfd);
+			perror("ERROR on fork");
+			exit(EXIT_FAILURE);
+		}
+			
+		// If this is the child, serve client
+		if (pid == 0)  {
+			close(sockfd);
+			childProcess(newsockfd);
+			exit(0);
+		}
+		else{
+			// Otherwise this is the parent, close the new socket
+			// and wait for another client
+			close(newsockfd);
+		}
+		// wait(&pid);
+		
+		// NOTE: you should call wait for created processes to 
+		// clear out child data in OS
+	
+	}
+}
+
+void childProcess(int sock){
+	char buffer[NETWORK_BUFFER_SIZE];
+      
+	bzero(buffer,NETWORK_BUFFER_SIZE);
+   
+	if ((n = read(sock,buffer,NETWORK_BUFFER_SIZE)) < 0) {
+		close(sock);
+		perror("ERROR reading from socket");
+		exit(EXIT_FAILURE);
+	}
+   
+	computeLine(buffer);
 }
 
 void computeLine(char* line){
 	char *args[STRING_BUFFER_AMOUNT];
-	char *rexdArgs[STRING_BUFFER_AMOUNT];
+	printf("%s\n", line);
 	splitStringBy(line, " ", args, STRING_BUFFER_AMOUNT);
 
-	if(strncmp("exit", args[0], STRING_BUFFER_SIZE) == 0){
-		exit(EXIT_SUCCESS);
-	}else if(strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0
-			|| strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0){
-		char *newDir = args[1];
-		if(changeCWD(newDir)){
-			resetCWD();		
-		}
-	}else if(strncmp("rexl", args[0], STRING_BUFFER_SIZE) == 0){
-		//do rex stuff
-	}else{
-		forkChild(paths, args, STRING_BUFFER_SIZE, true);
+	if(strncmp("run", args[0], STRING_BUFFER_SIZE) == 0){
+		shiftStrings(args);
+		serverRun(newsockfd, paths, args, STRING_BUFFER_SIZE);
+	}else if(strncmp("submit", args[0], STRING_BUFFER_SIZE) == 0){
+		shiftStrings(args);
+		serverRun(newsockfd, paths, args, STRING_BUFFER_SIZE);
 	}
-}
 
+}
 
 void resetCWD(){
 	char buffer[STRING_BUFFER_SIZE];
@@ -77,20 +158,3 @@ void resetCWD(){
 	strncpy(paths[0], buffer, STRING_BUFFER_SIZE);
 	printf("CWD: %s\n", paths[0]);
 }
-
-
-
-
-
-
-
-/*
-int main(){
-	char* a[] = {"/bin/ls", NULL};
-	char buffer [200];
-    getcwd(buffer, 200);
-	printf("hey: %s\n", buffer);
-	printf("\n\n%d\n\n", execv(a[0], a));
-
-	return 0;
-}*/

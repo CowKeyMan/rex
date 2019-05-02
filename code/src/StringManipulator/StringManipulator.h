@@ -13,3 +13,6 @@ void removeSpaces(char* string, int bufferSize);
 
 // check if string is just spaces
 bool isEmptyString(char* string, int bufferSize);
+
+// shift an array of strings by 1 to the left
+void shiftStrings(char **args);
