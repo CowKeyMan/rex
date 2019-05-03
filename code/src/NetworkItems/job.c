@@ -1,5 +1,8 @@
-#include "job.h"
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "job.h"
 
 void jobs_init(){
 	sem_init(&batch_jobs_mutex, 0, 1); 
@@ -10,10 +13,10 @@ void* addBatchJob(void *newJob){
 	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs++;
-	batchJobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
+	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
 
 	if(numberOfBatchJobs > 1){
-		if( timeBiggerThan( jobs[numberOfBatchJobs - 2].dateTime, (Job*)newJob->dateTime) ){
+		if( timeBiggerThan( jobs[numberOfBatchJobs - 2].dateTime, ((Job*)newJob)->dateTime) ){
 			jobs[numberOfBatchJobs - 1] = *(Job*)newJob;
 		}else{
 			jobs[numberOfBatchJobs - 1] = jobs[numberOfBatchJobs - 2];
@@ -29,7 +32,7 @@ void* removeTopJob(){
 	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs--;
-	batchJobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
+	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
 
 	sem_post(&batch_jobs_mutex);
 }
@@ -38,39 +41,70 @@ void* addJob(void *newJob){
 	sem_wait(&jobs_mutex);
 
 	Job *j = (Job*)newJob;
+	
+	numberOfJobs++;
+	j->jid = numberOfJobs;
+
 	FILE *f;
 
 	if( !(f=fopen(JOBS_FILENAME, "a")) ) {
     perror("Error opening file.");
 	}
 
-	char[STRING_BUFFER_SIZE] newLine;
+	char newLine[STRING_BUFFER_SIZE];
 
-	char[STRING_BUFFER_SIZE] dateTimeString;
+	char dateTimeString[STRING_BUFFER_SIZE];
 
 	sprintf(dateTimeString, "%d/%d/%d %d:%d:%d", 
-			j->dateTime->tm_mday, j->dateTime->tm_mon, j->dateTime->tm_year,
-			j->dateTime->tm_hour, j->dateTime->tm_min, j->dateTime->tm_sec);
+			&j->dateTime->tm_mday, &j->dateTime->tm_mon, &j->dateTime->tm_year,
+			&j->dateTime->tm_hour, &j->dateTime->tm_min, &j->dateTime->tm_sec);
 
-	strcpy(newLine, j->jid);
-	strcat(newLine, " ");
-	strcpy(newLine, j->host);
-	strcat(newLine, " ");
-	strcpy(newLine, j->command);
-	strcat(newLine, " ");
-	strcpy(newLine, j->type);
-	strcat(newLine, " ");
-	strcpy(newLine, j->status);
-	strcat(newLine, " ");
-	strcpy(newLine, dateTimeString);
-	strcat(newLine, "\n");
+	char buff[8];
+	sprintf(buff, "%d", j->jid);
+
+	strncpy(newLine,buff, STRING_BUFFER_SIZE);
+	strncat(newLine, " ", STRING_BUFFER_SIZE);
+	strncat(newLine, j->host, STRING_BUFFER_SIZE);
+	strncat(newLine, " ", STRING_BUFFER_SIZE);
+	strncat(newLine, j->command, STRING_BUFFER_SIZE);
+	strncat(newLine, " ", STRING_BUFFER_SIZE);
+	switch(j->type){
+		case INTERACTIVE:
+			strncat(newLine, "I", STRING_BUFFER_SIZE);
+		break;
+		case BATCH:
+			strncat(newLine, "B", STRING_BUFFER_SIZE);
+		break;
+	}
+	strncat(newLine, " ", STRING_BUFFER_SIZE);
+	switch(j->state){
+		case WAITING:
+			strncat(newLine, "WAITING", STRING_BUFFER_SIZE);
+		break;
+		case RUNNING:
+			strncat(newLine, "RUNNING", STRING_BUFFER_SIZE);
+		break;
+		case TERMINATED:
+			strncat(newLine, "TERMINATED", STRING_BUFFER_SIZE);
+		break;
+		case FINISHED:
+			strncat(newLine, "FINISHED", STRING_BUFFER_SIZE);
+		break;
+	}
+	strncat(newLine, " ", STRING_BUFFER_SIZE);
+	strncat(newLine, dateTimeString, STRING_BUFFER_SIZE);
+	strncat(newLine, "\n", STRING_BUFFER_SIZE);
 
 	fprintf(f, "%s", newLine);
 
 	sem_post(&jobs_mutex);
+
+	//since this can only occur in the master, send back message with new job id to sender
 }
 
-void* getJob(void *jid){}
+void* changeJob(void *job){}
+
+void *getJob(void *jid){}
 
 void jobs_finish(){
 	sem_destroy(&batch_jobs_mutex);

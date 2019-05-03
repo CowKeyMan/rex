@@ -14,9 +14,7 @@
 #include "../linenoise/linenoise.h"
 #include "../StringManipulator/StringManipulator.h"
 #include "../CommandsManager/commandsManager.h"
-
-#define STRING_BUFFER_SIZE 256
-#define STRING_BUFFER_AMOUNT 16
+#include "../NetworkItems/networkOptions.h"
 
 #define NETWORK_BUFFER_SIZE 256
 #define CLIENT_PORT 5000

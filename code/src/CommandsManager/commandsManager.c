@@ -1,4 +1,7 @@
+#include <unistd.h>
+
 #include "commandsManager.h"
+#include "../NetworkItems/job.h"
 
 void forkChild(char **paths, char **args, int bufferSize){
   pid_t pid = fork();
@@ -71,4 +74,48 @@ void clientSubmit(int sockfd, char *message, char *dateTime, char *buffer, int b
   strncat(buffer, dateTime, bufferSize);
 
   sendMessage(sockfd, buffer);
+}
+
+void serverSubmit(int sockfd, char **paths, char **args, int bufferSize){
+	// see number of arguments (command + parameters + date + time)
+	int numberOfArgs;
+	for(int i = 0; true; ++i){
+		if(args[i] == NULL){
+			break;
+		}
+	}
+	// get command
+	char command[STRING_BUFFER_SIZE];
+	strncpy(command, args[0], STRING_BUFFER_SIZE);
+	for(int i = 1; i < numberOfArgs - 2; ++i){
+		strncat(command, " ", STRING_BUFFER_SIZE);
+		strncpy(command, args[i], STRING_BUFFER_SIZE);
+	}
+	// get date and time
+	struct tm* dateTime;
+	int d,m,y,h,M,s;
+	sscanf(args[numberOfArgs-2], "%d/%d/%d", &d, &m, &y);
+	sscanf(args[numberOfArgs-1], "%d:%d:%d", &h, &M, &s);
+	dateTime->tm_mday = d;
+	dateTime->tm_mon = m;
+	dateTime->tm_year = y;
+	dateTime->tm_hour = h;
+	dateTime->tm_min = M;
+	dateTime->tm_sec = s;
+
+	// get hostname
+	char hostname[STRING_BUFFER_SIZE];
+	hostname[STRING_BUFFER_SIZE - 1] = '\0';
+	gethostname(hostname, sizeof(hostname));
+	char *a = hostname;
+
+	Job j;
+	strncpy(j.command, command, STRING_BUFFER_SIZE);
+	j.type = BATCH;
+	j.state = WAITING;
+	j.dateTime = dateTime;
+
+	//addBatchJob();
+	
+	//send add job to master
 }

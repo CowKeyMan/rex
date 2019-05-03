@@ -6,3 +6,6 @@
 #define NETWORK_MAX_QUEUE 10
 
 #define NETWORK_MASTER "Daniel"
+
+#define STRING_BUFFER_SIZE 256
+#define STRING_BUFFER_AMOUNT 16

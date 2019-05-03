@@ -10,9 +10,6 @@
 #include "../StringManipulator/StringManipulator.h"
 #include "../CommandsManager/commandsManager.h"
 
-#define STRING_BUFFER_SIZE 256
-#define STRING_BUFFER_AMOUNT 16
-
 void signalHandler(int signalNumber);
 
 //process the given line
@@ -148,7 +145,10 @@ void computeLine(char* line){
 		serverRun(newsockfd, paths, args, STRING_BUFFER_SIZE);
 	}else if(strncmp("submit", args[0], STRING_BUFFER_SIZE) == 0){
 		shiftStrings(args);
-		serverRun(newsockfd, paths, args, STRING_BUFFER_SIZE);
+		//server submit
+	}else if(strncmp("add", args[0], STRING_BUFFER_SIZE) == 0){
+		shiftStrings(args);
+		//add job
 	}
 
 }
