@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "job.h"
+#include "StringManipulator.h"
 
 void jobs_init(){
 	sem_init(&batch_jobs_mutex, 0, 1); 
@@ -144,9 +145,76 @@ Job createJobNow(char *host, char *command, Type type, JobState state){
 	return createJob(host, command, type, state, lt);
 }
 
-/*Job stringToJob(char *string){
+Job stringToJob(char *string){
+	Job j;
+	char type;
+	char status;
+	sscanf(string, "%d %d %s %c %c %d/%d/%d %d:%d:%d",
+		&j.pid,
+		&j.jid,
+		j.host,
+		&status,
+		&type,
+		&j.dateTime.tm_mday, &j.dateTime.tm_mon, &j.dateTime.tm_year,
+		&j.dateTime.tm_hour, &j.dateTime.tm_min, &j.dateTime.tm_sec);
+	
+	switch(status){
+		case 'W': j.state = WAITING; break;
+		case 'R': j.state = RUNNING; break;
+		case 'T': j.state = TERMINATED; break;
+		case 'F': j.state = FINISHED; break;
+		default: break;
+	}
 
+	switch(type){
+		case 'I': j.state = INTERACTIVE; break;
+		case 'B': j.state = BATCH; break;
+		default: break;
+	}
+
+	// extracting command
+	char *buffers[STRING_BUFFER_AMOUNT];
+	splitStringBy(" ", string, buffers, STRING_BUFFER_AMOUNT);
+	// remove all except command
+	for(int i = 0; i < 7; ++i){
+		shiftStrings(buffers);
+	}
+	char command[STRING_BUFFER_SIZE];
+	concatenteStrings(buffers, command, STRING_BUFFER_SIZE);
+	strncpy(j.command, command, STRING_BUFFER_SIZE);
+
+	return j;
 }
-char *jobToString(Job *j){
 
-}*/
+char *jobToString(Job *j){
+	char *string[STRING_BUFFER_SIZE];
+
+	Type type;
+	JobState status;
+
+	switch(j->state){
+		case WAITING: status = 'W'; break;
+		case  RUNNING: status  = 'R'; break;
+		case  TERMINATED: status = 'T'; break;
+		case  FINISHED: status = 'F'; break;
+		default: break;
+	}
+
+	switch(j->type){
+		case INTERACTIVE: status = 'I'; break;
+		case BATCH: status = 'B'; break;
+		default: break;
+	}
+
+	sprintf(string, "%d %d %s %c %c %d/%d/%d %d:%d:%d %s",
+		j->pid,
+		j->jid,
+		j->host,
+		status,
+		type,
+		j->dateTime.tm_mday, j->dateTime.tm_mon, j->dateTime.tm_year,
+		j->dateTime.tm_hour, j->dateTime.tm_min, j->dateTime.tm_sec,
+		j->command);	
+
+		return string;
+}

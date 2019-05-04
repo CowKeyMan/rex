@@ -46,6 +46,7 @@ Job createJob(char *host, char *command, Type type, JobState state, struct tm *d
 Job createJobNowPid(int pid, char *host, char *command, Type type, JobState state);
 Job createJobNow(char *host, char *command, Type type, JobState state);
 
+// read and put command as the last thing to avoid confusion
 Job stringToJob(char *string);
 char *jobToString(Job *j);
 
