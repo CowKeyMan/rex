@@ -113,9 +113,10 @@ void jobs_finish(){
 	sem_destroy(&jobs_mutex);
 }
 
-Job createJob(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime){
+Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime){
 	Job j;
 	j.pid = pid;
+	j.jid = 0;
 	strncpy(j.host, host, STRING_BUFFER_SIZE);
 	strncpy(j.command, command, STRING_BUFFER_SIZE);
 	j.type = type;
@@ -126,14 +127,14 @@ Job createJob(int pid, char *host, char *command, Type type, JobState state, str
 }
 
 Job createJob(char *host, char *command, Type type, JobState state, struct tm *dateTime){
-	return createJob(0, host, command, type, state, dateTime);
+	return createJobPid(0, host, command, type, state, dateTime);
 }
 
-Job createJobNow(int pid, char *host, char *command, Type type, JobState state){
+Job createJobNowPid(int pid, char *host, char *command, Type type, JobState state){
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 
-	return createJob(pid, host, command, type, state, lt);
+	return createJobPid(pid, host, command, type, state, lt);
 }
 
 Job createJobNow(char *host, char *command, Type type, JobState state){
@@ -142,3 +143,10 @@ Job createJobNow(char *host, char *command, Type type, JobState state){
 
 	return createJob(host, command, type, state, lt);
 }
+
+/*Job stringToJob(char *string){
+
+}
+char *jobToString(Job *j){
+
+}*/

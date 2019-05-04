@@ -5,6 +5,7 @@
 #include "Network.h"
 #include "Helper.h"
 #include "CommandsManager.h"
+#include "job.h"
 
 void executeCommand(char **paths, char **args){
   for (int i = 0; paths[i] != NULL; i++) {
