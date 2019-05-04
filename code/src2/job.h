@@ -4,8 +4,8 @@
 #include <semaphore.h>
 #include <time.h>
 
-#include "../MyTime/MyTime.h"
-#include "networkOptions.h"
+#include "MyTime.h"
+#include "Network.h"
 
 #define JOBS_FILENAME "Jobs.txt" // file stored in master. Keeps record of all jobs
 #define STRING_BUFFER_SIZE 256

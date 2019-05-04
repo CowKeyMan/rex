@@ -2,9 +2,13 @@ cmake_minimum_required (VERSION 2.6)
 
 project (REX C)
 
-add_executable(executables/rex ../src/rex/rex.c ../src/linenoise/linenoise.c ../src/StringManipulator/StringManipulator.c ../src/CommandsManager/CommandsManager.c ../src/MyTime/MyTime.c ../src/NetworkItems/job.c)
+find_package (Threads)
 
-add_executable(executables/rexd ../src/rexd/rexd.c ../src/linenoise/linenoise.c ../src/StringManipulator/StringManipulator.c ../src/CommandsManager/CommandsManager.c ../src/MyTime/MyTime.c ../src/NetworkItems/job.c)
+add_executable(executables/rex ../src/rex/rex.c ../src/StringManipulator/StringManipulator.c ../src/CommandsManager/CommandsManager.c ../src/MyTime/MyTime.c ../src/NetworkItems/job.c)
+target_link_libraries (executables/rex ${CMAKE_THREAD_LIBS_INIT})
+
+add_executable(executables/rexd ../src/rexd/rexd.c ../src/StringManipulator/StringManipulator.c ../src/CommandsManager/CommandsManager.c ../src/MyTime/MyTime.c ../src/NetworkItems/job.c)
+target_link_libraries (executables/rexd ${CMAKE_THREAD_LIBS_INIT})
 
 if ( CMAKE_COMPILER_IS_GNUCC )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")

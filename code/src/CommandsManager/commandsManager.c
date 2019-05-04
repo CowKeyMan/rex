@@ -1,4 +1,13 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <sys/wait.h>
+#include <sys/socket.h> 
+#include <sys/types.h> 
+#include <netinet/in.h>
 
 #include "commandsManager.h"
 #include "../NetworkItems/job.h"
@@ -79,29 +88,11 @@ void clientSubmit(int sockfd, char *message, char *dateTime, char *buffer, int b
 void serverSubmit(int sockfd, char **paths, char **args, int bufferSize){
 	// see number of arguments (command + parameters + date + time)
 	int numberOfArgs;
-	for(int i = 0; true; ++i){
-		if(args[i] == NULL){
+	for(numberOfArgs = 0; true; ++numberOfArgs){
+		if(args[numberOfArgs] == NULL){
 			break;
 		}
 	}
-	// get command
-	char command[STRING_BUFFER_SIZE];
-	strncpy(command, args[0], STRING_BUFFER_SIZE);
-	for(int i = 1; i < numberOfArgs - 2; ++i){
-		strncat(command, " ", STRING_BUFFER_SIZE);
-		strncpy(command, args[i], STRING_BUFFER_SIZE);
-	}
-	// get date and time
-	struct tm* dateTime;
-	int d,m,y,h,M,s;
-	sscanf(args[numberOfArgs-2], "%d/%d/%d", &d, &m, &y);
-	sscanf(args[numberOfArgs-1], "%d:%d:%d", &h, &M, &s);
-	dateTime->tm_mday = d;
-	dateTime->tm_mon = m;
-	dateTime->tm_year = y;
-	dateTime->tm_hour = h;
-	dateTime->tm_min = M;
-	dateTime->tm_sec = s;
 
 	// get hostname
 	char hostname[STRING_BUFFER_SIZE];
@@ -109,13 +100,50 @@ void serverSubmit(int sockfd, char **paths, char **args, int bufferSize){
 	gethostname(hostname, sizeof(hostname));
 	char *a = hostname;
 
+	// get command
+	char command[STRING_BUFFER_SIZE];
+	strncpy(command, args[0], STRING_BUFFER_SIZE);
+	for(int i = 1; i < numberOfArgs - 2; ++i){
+		strncat(command, " ", STRING_BUFFER_SIZE);
+		strncat(command, args[i], STRING_BUFFER_SIZE);
+	}
+
+	// get date and time
+	struct tm dateTime;
+	int d,m,y,h,M,s;
+	sscanf(args[numberOfArgs-2], "%d/%d/%d", &d, &m, &y);
+	sscanf(args[numberOfArgs-1], "%d:%d:%d", &h, &M, &s);
+	dateTime.tm_mday = d;
+	dateTime.tm_mon = m;
+	dateTime.tm_year = y;
+	dateTime.tm_hour = h;
+	dateTime.tm_min = M;
+	dateTime.tm_sec = s;
+
 	Job j;
 	strncpy(j.command, command, STRING_BUFFER_SIZE);
 	j.type = BATCH;
 	j.state = WAITING;
 	j.dateTime = dateTime;
 
+	// get job id from master
+
 	//addBatchJob();
 	
 	//send add job to master
+}
+
+void getJidFromMaster(Job *j){
+	//socket stuff
+	int sockfd, n;
+	struct sockaddr_in serv_addr;
+	struct hostent *server;
+	char network_buffer[NETWORK_BUFFER_SIZE];
+	
+	if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
+			perror("ERROR opening socket");
+			exit(1);
+	}
+
+	bzero(network_buffer, strlen(network_buffer));
 }

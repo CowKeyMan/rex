@@ -11,14 +11,11 @@
 #define __USE_XOPEN
 #include <time.h>
 
-#include "../linenoise/linenoise.h"
 #include "../StringManipulator/StringManipulator.h"
 #include "../CommandsManager/commandsManager.h"
 #include "../NetworkItems/networkOptions.h"
 
 #define NETWORK_BUFFER_SIZE 256
-#define CLIENT_PORT 5000
-#define SERVER_PORT 5001
 
 // process and do stuff with the arguments given
 void computeArgs(char **args);
@@ -158,11 +155,11 @@ void *extractTime(char *date, char *_time, char *ret){
 		&& sscanf(_time, "%d:%d:%d", &h, &M, &s) == 3){
 			sprintf(ret, "%d/%d/%d %d:%d:%d", d, m, y, h, M, s);
 		 }else{
-			fprintf(stderr, "Invlid date and time\n");
+			fprintf(stderr, "Invalid date and time\n");
 			exit(EXIT_FAILURE);
 		 }
 	}else{
-		fprintf(stderr, "Invlid date and time\n");
+		fprintf(stderr, "Invalid date and time\n");
 		exit(EXIT_FAILURE);
 	}
 }

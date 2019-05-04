@@ -4,9 +4,11 @@
 #include <stdbool.h>
 #include <sys/wait.h>
 #include <string.h>
+#include <sys/socket.h> 
+#include <sys/types.h> 
+#include <netinet/in.h>
 
-#include "../NetworkOptions/networkOptions.h"
-#include "../linenoise/linenoise.h"
+#include "../NetworkItems/networkOptions.h"
 #include "../StringManipulator/StringManipulator.h"
 #include "../CommandsManager/commandsManager.h"
 
@@ -137,7 +139,7 @@ void childProcess(int sock){
 
 void computeLine(char* line){
 	char *args[STRING_BUFFER_AMOUNT];
-	printf("%s\n", line);
+	//printf("%s\n", line);
 	splitStringBy(line, " ", args, STRING_BUFFER_AMOUNT);
 
 	if(strncmp("run", args[0], STRING_BUFFER_SIZE) == 0){
@@ -145,10 +147,14 @@ void computeLine(char* line){
 		serverRun(newsockfd, paths, args, STRING_BUFFER_SIZE);
 	}else if(strncmp("submit", args[0], STRING_BUFFER_SIZE) == 0){
 		shiftStrings(args);
-		//server submit
+		serverSubmit(newsockfd, paths, args, STRING_BUFFER_SIZE);
 	}else if(strncmp("add", args[0], STRING_BUFFER_SIZE) == 0){
 		shiftStrings(args);
 		//add job
+	}
+	// only on master
+	else if(strncmp("getjid", args[0], STRING_BUFFER_SIZE) == 0){
+		
 	}
 
 }
