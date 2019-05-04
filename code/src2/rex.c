@@ -7,6 +7,7 @@
 #include "Network.h"
 #include "Helper.h"
 #include "StringManipulator.h"
+#include "CommandsManager.h"
 
 // process and do stuff with the arguments given
 void computeArgs(char **args);
@@ -35,11 +36,9 @@ void computeArgs(char** args){
 		}
 	}
 
-  char responseBuffer[1024];
-
 	if(strncmp("run", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
-		clientRun(parameter, responseBuffer, NETWORK_BUFFER_SIZE);
+		clientRun(parameter, destination);
 	}else if(strncmp("submit", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
     char dateTime[STRING_BUFFER_SIZE];
