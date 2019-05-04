@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <semaphore.h>
+#include <string.h>
 
 #include "job.h"
 
@@ -110,4 +111,34 @@ void *getJob(void *jid){}
 void jobs_finish(){
 	sem_destroy(&batch_jobs_mutex);
 	sem_destroy(&jobs_mutex);
+}
+
+Job createJob(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime){
+	Job j;
+	j.pid = pid;
+	strncpy(j.host, host, STRING_BUFFER_SIZE);
+	strncpy(j.command, command, STRING_BUFFER_SIZE);
+	j.type = type;
+	j.state = state;
+	j.dateTime = *dateTime;
+
+	return j;
+}
+
+Job createJob(char *host, char *command, Type type, JobState state, struct tm *dateTime){
+	return createJob(0, host, command, type, state, dateTime);
+}
+
+Job createJobNow(int pid, char *host, char *command, Type type, JobState state){
+	time_t t = time(NULL);
+	struct tm *lt = localtime(&t);
+
+	return createJob(pid, host, command, type, state, lt);
+}
+
+Job createJobNow(char *host, char *command, Type type, JobState state){
+	time_t t = time(NULL);
+	struct tm *lt = localtime(&t);
+
+	return createJob(host, command, type, state, lt);
 }

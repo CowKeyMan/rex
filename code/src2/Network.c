@@ -113,3 +113,12 @@ void writeMessage_ToHost(char *message, char *hostname){
   
 	close(sockfd);
 }
+
+char *getHostName(){
+	char hostname[STRING_BUFFER_SIZE];
+	hostname[STRING_BUFFER_SIZE - 1] = '\0';
+	gethostname(hostname, sizeof(hostname));
+	char *hn = hostname;
+
+  return hn;
+}

@@ -107,3 +107,11 @@ void shiftStrings(char **args){
     i++;
   }
 }
+
+void concatenteStrings(char **strings, char *buffer, int bufferSize){
+  strncpy(buffer, strings[0], bufferSize);
+  for (int i = 1; strings[i] != NULL; ++i) {
+    strncat(buffer, " ", bufferSize);
+    strncat(buffer, strings[i], bufferSize);
+  }
+}

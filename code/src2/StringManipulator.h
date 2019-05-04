@@ -15,3 +15,6 @@ bool isEmptyString(char* string, int bufferSize);
 
 // shift an array of strings by 1 to the left
 void shiftStrings(char **args);
+
+// concatinate the array of strings to one string separated by spaces
+void concatenteStrings(char **strings, char *buffer, int bufferSize);

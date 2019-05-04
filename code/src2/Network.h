@@ -13,3 +13,5 @@ void writeMessage_ToSocket(char *message, int sockfd);
 
 void writeMessage_ToHost(char *message, char *hostname);
 void writeMessage_ToHost_GetResponse(char *message, char *hostname, char *responseBuffer);
+
+char *getHostName();

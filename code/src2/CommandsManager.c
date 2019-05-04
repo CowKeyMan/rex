@@ -33,5 +33,15 @@ void clientRun(char *message, char *destination){
 void serverRun(int sockfd, char ** paths, char **args){
 	dup2(sockfd, STDOUT_FILENO);
 
+  char command[STRING_BUFFER_SIZE];
+  concatenteStrings(args, command, STRING_BUFFER_SIZE);
+
+  createJobNow(getHostName(), command, INTERACTIVE, RUNNING);
+
+  //add the job to master
+
   executeCommand(paths, args);
+
+  // set the job to finished
+
 }
