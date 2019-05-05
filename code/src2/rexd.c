@@ -10,6 +10,7 @@
 #include "Network.h"
 #include "CommandsManager.h"
 #include "StringManipulator.h"
+#include "job.h"
 
 void resetCWD();
 
@@ -48,7 +49,7 @@ int main(int argc, char *argv[]){
 
     pid_t pid = fork();
     
-    if (pid < 0) { // child
+    if (pid < 0) { // error
       close(sockfd);
       close(newsockfd);
       error("ERROR on fork");
@@ -63,6 +64,8 @@ int main(int argc, char *argv[]){
       close(newsockfd);
     }
   }
+
+  jobs_finish();
 }
 
 void initializeSignalHandling(){
@@ -76,10 +79,8 @@ void initializeSignalHandling(){
 
 void readClientCommand(int sockfd){
   
-  char buffer[NETWORK_BUFFER_SIZE];
+  char buffer[STRING_BUFFER_SIZE];
   readSocket_IntoBuffer(sockfd, buffer);
-
-  printf("%s\n", buffer);
 
   char *args[STRING_BUFFER_AMOUNT];
   splitStringBy(buffer, " ", args, STRING_BUFFER_AMOUNT);

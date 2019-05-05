@@ -35,16 +35,18 @@ void clientRun(char *message, char *destination){
 
 void serverRun(int sockfd, char ** paths, char **args){
   // redirection of stdio
-  dup2(sockfd, STDIN_FILENO);
+  /*dup2(sockfd, STDIN_FILENO);
   dup2(sockfd, STDOUT_FILENO);
-  dup2(sockfd, STDERR_FILENO);
+  dup2(sockfd, STDERR_FILENO);*/
 
   // create jobString to send to master
   char command[STRING_BUFFER_SIZE];
   concatenteStrings(args, command, STRING_BUFFER_SIZE);
-  Job j = createJobNow(getHostName(), command, INTERACTIVE, RUNNING);
+  char hostName[STRING_BUFFER_SIZE];
+  strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
+  Job j = createJobNow(hostName, command, INTERACTIVE, RUNNING);
   char *jobString = jobToString(&j);
-  
+
   //add the job to master's file
   char addJobCommand[STRING_BUFFER_SIZE];
   char JobIDString[STRING_BUFFER_SIZE];
@@ -77,7 +79,8 @@ void serverAddCommand(char **args){
   char jobString[STRING_BUFFER_SIZE];
   concatenteStrings(args, jobString, STRING_BUFFER_SIZE);
   Job j = stringToJob(jobString);
-  addJob(&j);
+  int jid = addJob(&j);
+  /// send message to sender trough sockettt, the jid I guess? we'll see
 }
 
 bool changeCWD(char* newDir){

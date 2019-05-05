@@ -3,14 +3,15 @@
 
 #include "StringManipulator.h"
 
-void splitStringBy(char *delims, char* splitString, char** returnArgs, int bufferAmount) {
+#include <stdio.h>
+void splitStringBy(char *splitString, char* delims, char** returnArgs, int bufferAmount) {
   char *token;
-  token = strtok(delims, splitString);
+  token = strtok(splitString, delims);
 
   int tokenIndex = 0;
   while (token != NULL && tokenIndex < bufferAmount) {
     returnArgs[tokenIndex] = token;
-    token = strtok(NULL, splitString);
+    token = strtok(NULL, delims);
     tokenIndex++;
   }
 

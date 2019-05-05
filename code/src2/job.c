@@ -47,8 +47,6 @@ void removeTopJob(){
 }
 
 int addJob(Job *newJob){
-	sem_wait(jobs_mutex);
-
 	Job *j = newJob;
 	
 	numberOfJobs++;
@@ -63,8 +61,6 @@ int addJob(Job *newJob){
 	char *newLine = jobToString(newJob);
 
 	fprintf(f, "%s", newLine);
-
-	sem_post(jobs_mutex);
 
 	return j->jid;
 }
@@ -108,6 +104,8 @@ Job createJobNow(char *host, char *command, Type type, JobState state){
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 
+	lt->tm_year += 1900;
+
 	return createJob(host, command, type, state, lt);
 }
 
@@ -140,11 +138,12 @@ Job stringToJob(char *string){
 
 	// extracting command
 	char *buffers[STRING_BUFFER_AMOUNT];
-	splitStringBy(" ", string, buffers, STRING_BUFFER_AMOUNT);
+	splitStringBy(string, " ", buffers, STRING_BUFFER_AMOUNT);
 	// remove all except command
 	for(int i = 0; i < 7; ++i){
 		shiftStrings(buffers);
 	}
+
 	char command[STRING_BUFFER_SIZE];
 	concatenteStrings(buffers, command, STRING_BUFFER_SIZE);
 	strncpy(j.command, command, STRING_BUFFER_SIZE);
@@ -153,8 +152,6 @@ Job stringToJob(char *string){
 }
 
 char *jobToString(Job *j){
-	char *string;
-
 	Type type;
 	JobState status;
 
@@ -172,15 +169,25 @@ char *jobToString(Job *j){
 		default: break;
 	}
 
-	sprintf(string, "%d %d %s %c %c %d/%d/%d %d:%d:%d %s",
+	char string[STRING_BUFFER_SIZE];
+
+	char pid_jid[16];
+	sprintf(pid_jid, "%d %d ",
 		j->pid,
-		j->jid,
-		j->host,
+		j->jid);
+	
+	char status_type_dateTime[32];
+	sprintf(status_type_dateTime, " %c %c %d/%d/%d %d:%d:%d ", 
 		status,
 		type,
 		j->dateTime.tm_mday, j->dateTime.tm_mon, j->dateTime.tm_year,
-		j->dateTime.tm_hour, j->dateTime.tm_min, j->dateTime.tm_sec,
-		j->command);	
+		j->dateTime.tm_hour, j->dateTime.tm_min, j->dateTime.tm_sec);
+	
+	strncpy(string, pid_jid, STRING_BUFFER_SIZE);
+	strncat(string, j->host, STRING_BUFFER_SIZE);
+	strncat(string, status_type_dateTime, STRING_BUFFER_SIZE);
+	strncat(string, j->command, STRING_BUFFER_SIZE);
 
-	return string;
+	char *retString = string;
+	return retString;
 }
