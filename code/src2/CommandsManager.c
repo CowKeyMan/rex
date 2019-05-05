@@ -11,14 +11,14 @@
 
 void executeCommand(char **paths, char **args){
   for (int i = 0; paths[i] != NULL; i++) {
-      char pathtmp[STRING_BUFFER_SIZE];
-      strncpy(pathtmp, paths[i], STRING_BUFFER_SIZE);
-      strncat(pathtmp, "/", STRING_BUFFER_SIZE);
-      strncat(pathtmp, args[0], STRING_BUFFER_SIZE);
+    char pathtmp[STRING_BUFFER_SIZE];
+    strncpy(pathtmp, paths[i], STRING_BUFFER_SIZE);
+    strncat(pathtmp, "/", STRING_BUFFER_SIZE);
+    strncat(pathtmp, args[0], STRING_BUFFER_SIZE);
 
-      execv(pathtmp, args);
-    }
-    error("Error");
+    execv(pathtmp, args);
+  }
+  error("Error");
 }
 
 void clientRun(char *message, char *destination){
@@ -35,12 +35,10 @@ void clientRun(char *message, char *destination){
 
 void serverRun(int sockfd, char ** paths, char **args){
   // redirection of stdio
-  /*dup2(sockfd, STDIN_FILENO);
-  dup2(sockfd, STDOUT_FILENO);
-  dup2(sockfd, STDERR_FILENO);*/
+  
 
   // create jobString to send to master
-  char command[STRING_BUFFER_SIZE];
+  /*char command[STRING_BUFFER_SIZE];
   concatenteStrings(args, command, STRING_BUFFER_SIZE);
   char hostName[STRING_BUFFER_SIZE];
   strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
@@ -49,17 +47,20 @@ void serverRun(int sockfd, char ** paths, char **args){
 
   //add the job to master's file
   char addJobCommand[STRING_BUFFER_SIZE];
-  char JobIDString[STRING_BUFFER_SIZE];
+  char jobIDString[STRING_BUFFER_SIZE];
   strncpy(addJobCommand, "add ", STRING_BUFFER_SIZE);
   strncat(addJobCommand, jobString, STRING_BUFFER_SIZE);
-  writeMessage_ToHost_GetResponse(addJobCommand, NETWORK_MASTER, JobIDString);
+  writeMessage_ToHost_GetResponse(addJobCommand, NETWORK_MASTER, jobIDString);*/
 
   // fork child to execute the command
   pid_t pid = fork();
   if (pid == 0) {
+    dup2(sockfd, STDIN_FILENO);
+    dup2(sockfd, STDOUT_FILENO);
+    dup2(sockfd, STDERR_FILENO);
     executeCommand(paths, args);
-    error("Error");
   }else if (pid > 0) {
+    // change process' pid given jid
     // wait for child
     int status;
     waitpid(pid, &status, WUNTRACED);
@@ -68,19 +69,21 @@ void serverRun(int sockfd, char ** paths, char **args){
   }
 
   // set the job to finished
-  j.state = FINISHED;
+  /*j.state = FINISHED;
   char changeJobCommand[STRING_BUFFER_SIZE];
   strncpy(changeJobCommand, "change ", STRING_BUFFER_SIZE);
   strncat(changeJobCommand, jobToString(&j), STRING_BUFFER_SIZE);
-  writeMessage_ToHost(changeJobCommand, NETWORK_MASTER);
+  writeMessage_ToHost(changeJobCommand, NETWORK_MASTER);*/
 }
 
-void serverAddCommand(char **args){
+void serverAdd(int sockfd, char **args){
   char jobString[STRING_BUFFER_SIZE];
   concatenteStrings(args, jobString, STRING_BUFFER_SIZE);
   Job j = stringToJob(jobString);
   int jid = addJob(&j);
-  /// send message to sender trough sockettt, the jid I guess? we'll see
+  char jidString[8];
+  sprintf(jidString, "%d\n", jid);
+  writeMessage_ToSocket(jidString, sockfd);
 }
 
 bool changeCWD(char* newDir){

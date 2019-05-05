@@ -4,4 +4,4 @@ void clientRun(char *message, char *destination);
 
 void serverRun(int sockfd, char ** paths, char **args);
 
-void serverAddCommand(char **args);
+void serverAdd(int sockfd, char **args);

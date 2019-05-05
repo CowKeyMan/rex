@@ -26,7 +26,7 @@ void sig_handler(int sig){
     int status;
     int i = waitpid(-1, &status, WNOHANG);
     if(i > 0 && kill(i, 0) != 0) {
-        error("Error");
+      error("Error");
     }
   }
 }
@@ -97,7 +97,7 @@ void readClientCommand(int sockfd){
   // only on master
   else if(strncmp("add", args[0], STRING_BUFFER_SIZE) == 0){
     shiftStrings(args);
-    serverAddCommand(args);
+    serverAdd(sockfd, args);
   }
   else if(strncmp("change", args[0], STRING_BUFFER_SIZE) == 0){
     shiftStrings(args);

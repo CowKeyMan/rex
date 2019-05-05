@@ -66,7 +66,7 @@ void writeMessage_ToHost_GetResponse(char *message, char *hostname, char *respon
   }
   if(n < 0){
     close(sockfd);
-    error("ERROR writing to socket");
+    error("ERROR reading from socket");
 	}
   
 	close(sockfd);
@@ -147,14 +147,11 @@ int writeMessage_ToHost_ReturnSocket(char *message, char *hostname){
 		error("ERROR connecting");
 	}
 
-  while (( n = write(sockfd, message, NETWORK_BUFFER_SIZE) ) > 0){
-    bzero(network_buffer, NETWORK_BUFFER_SIZE);
-  }
-  if(n < 0){
+  if ( ( n = write(sockfd, message, NETWORK_BUFFER_SIZE) ) < 0){
     close(sockfd);
     error("ERROR writing to socket");
   }
-  
+
 	return sockfd;
 }
 
@@ -167,8 +164,7 @@ char *getHostName(){
   return hn;
 }
 
-void continuouslyReadAndPrintFromSocketUntilEnd(int sockfd)
-{
+void continuouslyReadAndPrintFromSocketUntilEnd(int sockfd){
   int n;
   char buffer[NETWORK_BUFFER_SIZE];
   bzero(buffer, NETWORK_BUFFER_SIZE);
@@ -177,6 +173,7 @@ void continuouslyReadAndPrintFromSocketUntilEnd(int sockfd)
   }
   if(n < 0){
     close(sockfd);
+    
     error("ERROR reading from socket");
 	}
   close(sockfd);
@@ -213,6 +210,7 @@ int acceptClient_ReturnNewSocket(int sockfd){
   int newsockfd, clilen;
   struct sockaddr_in cli_addr;
 
+  clilen = sizeof(cli_addr);
   // Accept connection form a client
   newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
