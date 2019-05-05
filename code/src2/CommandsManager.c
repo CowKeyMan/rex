@@ -28,9 +28,9 @@ void clientRun(char *message, char *destination){
   strncat(buffer, " ", STRING_BUFFER_SIZE);
   strncat(buffer, message, STRING_BUFFER_SIZE);
 
-  writeMessage_ToHost_GetResponse(buffer, destination, buffer);
-
-  printf("%s", buffer);
+  // send server run _ _ _
+  int sockfd = writeMessage_ToHost_ReturnSocket(buffer, destination);
+  continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
 }
 
 void serverRun(int sockfd, char ** paths, char **args){
@@ -71,4 +71,21 @@ void serverRun(int sockfd, char ** paths, char **args){
   strncpy(changeJobCommand, "change ", STRING_BUFFER_SIZE);
   strncat(changeJobCommand, jobToString(&j), STRING_BUFFER_SIZE);
   writeMessage_ToHost(changeJobCommand, NETWORK_MASTER);
+}
+
+void serverAddCommand(char **args){
+  char jobString[STRING_BUFFER_SIZE];
+  concatenteStrings(args, jobString, STRING_BUFFER_SIZE);
+  Job j = stringToJob(jobString);
+  addJob(&j);
+}
+
+bool changeCWD(char* newDir){
+  //Change the directory
+  if (chdir(newDir) != 0) {
+    fprintf(stderr, "Invalid path\n");
+    return false;
+  } else {
+    return true;
+  }
 }

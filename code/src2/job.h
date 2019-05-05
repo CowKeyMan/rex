@@ -29,16 +29,16 @@ Job *nextjob;
 int numberOfJobs;
 int numberOfBatchJobs;
 
-sem_t batch_jobs_mutex;
-sem_t jobs_mutex;
+sem_t *batch_jobs_mutex;
+sem_t *jobs_mutex;
 
 // batch jobs list for each server
 void jobs_init(); // initialize semaphore
-void* addBatchJob(void *newJob); // insert item and sort, and set next job
-void* removeTopJob(); // remove the item at the last
+void addBatchJob(Job *newJob); // insert item and sort, and set next job
+void removeTopJob(); // remove the item at the last
 void jobs_finish(); // do at exit
 
-void* addJob(void *newJob); // to the job file in the master // returns the job itself with a updted pid
+int addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid
 void* changeJob(void *job); // change a job state int he status file given the job
 
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime);

@@ -27,11 +27,11 @@ void computeArgs(char** args){
 
 	// if no command is found
 	if(! args[1]){
-		error("No command found\n");
+		error("No command found");
 		return;
 	}else{
 		if(! args[2]){
-			error("No parameter found\n");
+			error("No parameter found");
 			return;
 		}
 	}
@@ -61,7 +61,7 @@ void computeArgs(char** args){
 	}else if(strncmp("chdir", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
 	}else{
-		error("Command not found\n");
+		error("Command not found");
 	}
 }
 
@@ -80,7 +80,7 @@ bool extractDestination(char *arg){
 
 void extractDestinationHard(char *arg){
 	if(!extractDestination(arg)){
-			error("ERROR incorrect use. Please enter address after command\n");
+			error("ERROR incorrect use. Please enter address after command");
 	}
 }
 
@@ -97,11 +97,11 @@ void *extractTime(char *date, char *_time, char *ret){
 		&& sscanf(_time, "%d:%d:%d", &h, &M, &s) == 3){
 			sprintf(ret, "%d/%d/%d %d:%d:%d", d, m, y, h, M, s);
 		 }else{
-			error("Invalid date and time\n");
+			error("Invalid date and time");
 			exit(EXIT_FAILURE);
 		 }
 	}else{
-		error("Invalid date and time\n");
+		error("Invalid date and time");
 		exit(EXIT_FAILURE);
 	}
 }
