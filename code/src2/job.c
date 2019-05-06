@@ -22,7 +22,7 @@ void addBatchJob(Job *newJob){
 	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs++;
-	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
+	jobs = (Job*)realloc( jobs, numberOfBatchJobs * sizeof(Job) );
 
 	if(numberOfBatchJobs > 1){
 		if( timeBiggerThan( &jobs[numberOfBatchJobs - 2].dateTime, &((Job*)newJob)->dateTime) ){
@@ -35,6 +35,13 @@ void addBatchJob(Job *newJob){
 	}
 
 	sem_post(&batch_jobs_mutex);
+}
+
+int getNoOfBatchJobs(){
+	sem_wait(&batch_jobs_mutex);
+	int i = numberOfBatchJobs;
+	sem_post(&batch_jobs_mutex);
+	return i;
 }
 
 void removeTopJob(){

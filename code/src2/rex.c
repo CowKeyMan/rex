@@ -92,6 +92,7 @@ void *extractTime(char *date, char *_time, char *ret){
 	if(date == NULL || strncmp("now", date, STRING_BUFFER_SIZE) == 0){
 		retTime = time(NULL);
 		t = localtime(&retTime);
+		struct tm *a = t;
 		strftime(ret, STRING_BUFFER_SIZE, "%d/%m/%Y %H:%M:%S", t);
 	}else if (date && _time){ // both are not null
 		int d,m,y,h,M,s;

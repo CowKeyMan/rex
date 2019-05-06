@@ -1,6 +1,7 @@
 #include "MyTime.h"
 
 bool timeBiggerThan(struct tm* a, struct tm* b){
+	
 	if(a->tm_year > b->tm_year){
 		return true;
 	} else if(a->tm_year < b->tm_year){
@@ -39,3 +40,5 @@ bool timeBiggerThan(struct tm* a, struct tm* b){
 	
 	return false;
 }
+
+/*printf("b: %d %d %d %d %d %d\n", b->tm_mday, b->tm_mon, b->tm_year, b->tm_hour, b->tm_min, b->tm_sec);*/

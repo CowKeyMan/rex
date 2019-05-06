@@ -8,6 +8,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 
 #include <stdio.h>
 
@@ -101,16 +102,19 @@ void resetCWD(){
 
 void *pollThread(){
   while(1){
-    if(&jobs[0] != NULL){
+    int noOfBatchJobs = getNoOfBatchJobs();
+    if(noOfBatchJobs > 0){
       time_t t = time(NULL);
       struct tm *lt = localtime(&t);
+      lt->tm_mon += 1;
       lt->tm_year += 1900;
-      Job topJob = jobs[ sizeof(jobs)/sizeof(Job) - 1 ];
-      if( timeBiggerThan( lt , &topJob.dateTime) ) {
-      printf("helo\n");
-        //GET JOB, OPEN FILE, redirect stdout of child to file & stderr, close stdin of child, in parent change the child, in signal handler for child lookup child by pid and change the status to finished
+      Job topJob = jobs[noOfBatchJobs - 1];
+
+      
+      if( timeBiggerThan( lt , &topJob.dateTime) == true ) {
         topJob.state = RUNNING;
         changeJob(&topJob);
+        //GET JOB, OPEN FILE, redirect stdout of child to file & stderr, close stdin of child, in parent change the child, in signal handler for child lookup child by pid and change the status to finished
 
         // fork child to execute the command
         pid_t pid = fork();
@@ -118,21 +122,22 @@ void *pollThread(){
           int f;
           char fileName[STRING_BUFFER_SIZE];
           sprintf(fileName, "Job_%d.txt", topJob.jid);
-          if( !(f = open(fileName, O_WRONLY | O_CREAT, S_IRUSR | S_IWUSR) ) ) {
+          remove(fileName);
+          if( !(f = open(fileName, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR) ) ) {
             error("Error creating log file.");
           }
 
+          char *args[STRING_BUFFER_AMOUNT];
+          splitStringBy(topJob.command, " ", args, STRING_BUFFER_AMOUNT);
+          
           // redirection of stdio
           close(STDIN_FILENO);
           dup2(f, STDOUT_FILENO);
           dup2(f, STDERR_FILENO);
 
-          char *args[STRING_BUFFER_AMOUNT];
-          splitStringBy(topJob.command, " ", args, STRING_BUFFER_AMOUNT);
           executeCommand(paths, args);
           exit(1);
         }else if (pid > 0) {
-          removeTopJob();
         } else {
           FILE *f;
           char fileName[STRING_BUFFER_SIZE];
@@ -143,6 +148,7 @@ void *pollThread(){
           fputs("Fork Failed", f);
           fclose(f);
         }
+        removeTopJob();
       }
     }
     sleep(1);

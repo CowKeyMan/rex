@@ -35,6 +35,7 @@ sem_t jobs_mutex;
 // batch jobs list for each server
 void jobs_init(); // initialize semaphore
 void addBatchJob(Job *newJob); // insert item and sort, and set next job
+int getNoOfBatchJobs(); // safely get no of batch jobs
 void removeTopJob(); // remove the item at the last
 void jobs_finish(); // do at exit
 
