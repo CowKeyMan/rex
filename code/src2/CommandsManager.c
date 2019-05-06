@@ -67,7 +67,7 @@ void serverRun(int sockfd, char ** paths, char **args){
     // chnge job to finished with its jid
     if(WIFSIGNALED(status)){
       j.state = TERMINATED;
-    }else if(WIFSIGNALED(status)){
+    }else if(WIFEXITED(status)){
       j.state = FINISHED;
     }
     changeJob(&j);

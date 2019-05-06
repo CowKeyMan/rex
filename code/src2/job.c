@@ -91,7 +91,6 @@ void changeJob(Job *job){
 		strncpy(line2, line, STRING_BUFFER_SIZE);
 		Job j = stringToJob(line);
 		if(j.jid == job->jid){
-			job->state = FINISHED;
 			jobToString(job, line2);
 		}
 		fputs(line2, temp);
