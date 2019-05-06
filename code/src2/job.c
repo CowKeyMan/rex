@@ -62,7 +62,9 @@ void addJob(Job *newJob){
 
 	FILE *f;
 
-	if( !(f=fopen(JOBS_FILENAME, "a")) ) {
+	char fileName[STRING_BUFFER_SIZE];
+	sprintf(fileName, "%s/%s", serverStartingCWD, JOBS_FILENAME);
+	if( !(f=fopen(fileName, "a")) ) {
     error("Error opening file.");
 	}
 
@@ -80,11 +82,15 @@ void changeJob(Job *job){
 	sem_wait(&jobs_mutex);
 	// read file line by line until jid is found
 	// output each line to temp, unless jid matches jobID, then change it and write it
-	char *temporaryFileName = "temp.txt";
+	char temporaryFileName[STRING_BUFFER_SIZE];
+	strncpy(temporaryFileName, serverStartingCWD, STRING_BUFFER_SIZE);
+	strncat(temporaryFileName, "/temp.txt", STRING_BUFFER_SIZE);
 
 	FILE *f;
 	FILE *temp;
-	if( !(f=fopen(JOBS_FILENAME, "r")) ) {
+	char fileName[STRING_BUFFER_SIZE];
+	sprintf(fileName, "%s/%s", serverStartingCWD, JOBS_FILENAME);
+	if( !(f=fopen(fileName, "r")) ) {
     error("Error opening file");
 	}
 	if( !(temp=fopen(temporaryFileName, "w")) ) {
@@ -105,8 +111,8 @@ void changeJob(Job *job){
 	fclose(f);
 	fclose (temp);
 
-	remove(JOBS_FILENAME);
-	rename(temporaryFileName, JOBS_FILENAME);
+	remove(fileName);
+	rename(temporaryFileName, fileName);
 
 	sem_post(&jobs_mutex);
 }

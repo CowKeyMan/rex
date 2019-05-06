@@ -19,6 +19,7 @@
 #include "job.h"
 
 void *pollThread();
+void *handleChild(void *job);
 void resetCWD();
 
 char *paths[STRING_BUFFER_SIZE] = {
@@ -31,8 +32,11 @@ pthread_t pollingThread;
 
 // read client and process the inputs
 void* readClientCommand(void *sockfd);
+void resetOutputFileDirectory();
 
 int main(int argc, char *argv[]){
+  resetOutputFileDirectory();
+
   pthread_t thread;
 
   resetCWD();
@@ -65,7 +69,7 @@ void* readClientCommand(void *_sockfd){
   char buffer[STRING_BUFFER_SIZE];
   readSocket_IntoBuffer(sockfd, buffer);
 
-  printf("From rexd readclientCommand: %s\n", buffer);
+  printf("Command from client: %s\n", buffer);
 
   char *args[STRING_BUFFER_AMOUNT];
   splitStringBy(buffer, " ", args, STRING_BUFFER_AMOUNT);
@@ -78,18 +82,9 @@ void* readClientCommand(void *_sockfd){
     shiftStrings(args);
     serverSubmit(sockfd, args);
     close(sockfd);
-  }
-
-  // only on master
-  else if(strncmp("add", args[0], STRING_BUFFER_SIZE) == 0){
-    shiftStrings(args);
-    //serverAdd(sockfd, args);
-  }
-  else if(strncmp("change", args[0], STRING_BUFFER_SIZE) == 0){
-    shiftStrings(args);
-  }
-  else if(strncmp("getjid", args[0], STRING_BUFFER_SIZE) == 0){
-    shiftStrings(args);
+  }else if(strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0){
+    serverChdir(sockfd, args[1]);
+    close(sockfd);
   }
 }
 
@@ -98,6 +93,7 @@ void resetCWD(){
 	getcwd(buffer, STRING_BUFFER_SIZE);
 	paths[0] = (char*)malloc(STRING_BUFFER_SIZE * sizeof(char));
 	strncpy(paths[0], buffer, STRING_BUFFER_SIZE);
+	strncpy(serverStartingCWD, buffer, STRING_BUFFER_SIZE);
 }
 
 void *pollThread(){
@@ -121,7 +117,7 @@ void *pollThread(){
         if (pid == 0) {
           int f;
           char fileName[STRING_BUFFER_SIZE];
-          sprintf(fileName, "Job_%d.txt", topJob.jid);
+          sprintf(fileName, "%s/Jobs/Job_%d.txt", serverStartingCWD, topJob.jid);
           remove(fileName);
           if( !(f = open(fileName, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR) ) ) {
             error("Error creating log file.");
@@ -136,12 +132,18 @@ void *pollThread(){
           dup2(f, STDERR_FILENO);
 
           executeCommand(paths, args);
-          exit(1);
         }else if (pid > 0) {
+          topJob.pid = pid;
+          Job *job = (Job*)malloc(sizeof(Job));
+          *job = topJob;
+          pthread_t childHandlerThread;
+          if(pthread_create(&childHandlerThread, NULL, handleChild, job)){
+            perror("Error in creting child handling socket");
+          }
         } else {
           FILE *f;
           char fileName[STRING_BUFFER_SIZE];
-          sprintf(fileName, "Job_%d.txt", topJob.jid);
+          sprintf(fileName, "%s/Jobs/Job_%d.txt", serverStartingCWD, topJob.jid);
           if( !(f=fopen(fileName, "w")) ) {
             error("Error opening file.");
           }
@@ -151,6 +153,40 @@ void *pollThread(){
         removeTopJob();
       }
     }
-    sleep(1);
+    sleep(1); // poll every 1 second, rather than constantly
   }
+  pthread_exit(NULL);
+}
+
+void *handleChild(void *job){
+  Job j = *(Job*)job;
+  free(job);
+  // wait for child until it stops ab/normally
+  int status = -1;
+  while( !(WIFSIGNALED(status) || WIFEXITED(status)) ){
+    waitpid(j.pid, &status, WUNTRACED);
+  }
+
+  // chnge job to finished with its jid
+  if(WIFSIGNALED(status)){
+    j.state = TERMINATED;
+  }else if(WIFEXITED(status)){
+    j.state = FINISHED;
+  }
+  changeJob(&j);
+  pthread_exit(NULL);
+}
+
+void resetOutputFileDirectory(){
+  remove(JOBS_FILENAME);
+  for(int i = 0; remove("Jobs") == -1; ++i) {
+    FILE *f;
+    char fileName[STRING_BUFFER_SIZE];
+    sprintf(fileName, "Jobs/Job_%d.txt", i);
+    if((f=fopen(fileName, "r")) ) {
+      fclose(f);
+      remove(fileName);
+    }
+  }
+  mkdir("Jobs", S_IRUSR | S_IWUSR | S_IXUSR);
 }

@@ -9,6 +9,8 @@
 #define STRING_BUFFER_SIZE 256
 #define STRING_BUFFER_AMOUNT 16
 
+char serverStartingCWD[128];
+
 void writeMessage_ToSocket(char *message, int sockfd);
 
 void writeMessage_ToHost(char *message, char *hostname);

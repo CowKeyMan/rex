@@ -62,6 +62,8 @@ void computeArgs(char** args){
 		}
 	}else if(strncmp("chdir", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
+		printf("%s\n", destination);
+		clientChdir(parameter, destination);
 	}else{
 		error("Command not found");
 	}

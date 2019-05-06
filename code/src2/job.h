@@ -7,7 +7,7 @@
 #include "MyTime.h"
 #include "Network.h"
 
-#define JOBS_FILENAME "Jobs.txt" // file stored in master. Keeps record of all jobs
+#define JOBS_FILENAME "Jobs/Jobs.txt" // file stored in master. Keeps record of all jobs
 #define STRING_BUFFER_SIZE 256
 
 // state of a job

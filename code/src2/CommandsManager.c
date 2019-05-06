@@ -46,6 +46,19 @@ void clientSubmit(char *message, char *destination){
   printf("%s\n", response);
 }
 
+void clientChdir(char *message, char *destination){
+  char buffer[STRING_BUFFER_SIZE];
+
+  strncpy(buffer, "chdir", STRING_BUFFER_SIZE);
+  strncat(buffer, " ", STRING_BUFFER_SIZE);
+  strncat(buffer, message, STRING_BUFFER_SIZE);
+
+  // send server chdir _ _ _
+  char response[STRING_BUFFER_SIZE];
+  writeMessage_ToHost_GetResponse(buffer, destination, response);
+  printf("%s\n", response);
+}
+
 #include <stdlib.h>
 void serverRun(int sockfd, char ** paths, char **args){
   // fork child to execute the command
@@ -116,12 +129,15 @@ void serverSubmit(int sockfd, char **args){
   close(sockfd);
 }
 
-bool changeCWD(char* newDir){
+void serverChdir(int sockfd, char *dir){
   //Change the directory
-  if (chdir(newDir) != 0) {
-    fprintf(stderr, "Invalid path\n");
-    return false;
+  if (chdir(dir) != 0) {
+    writeMessage_ToSocket("Invalid path", sockfd);
   } else {
-    return true;
+    writeMessage_ToSocket("Done!", sockfd);
   }
+}
+
+bool changeCWD(char* newDir){
+  
 }
