@@ -25,11 +25,11 @@ void addBatchJob(Job *newJob){
 	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
 
 	if(numberOfBatchJobs > 1){
-		/*if( timeBiggerThan( jobs[numberOfBatchJobs - 2].dateTime, ((Job*)newJob)->dateTime) ){
+		if( timeBiggerThan( &jobs[numberOfBatchJobs - 2].dateTime, &((Job*)newJob)->dateTime) ){
 			jobs[numberOfBatchJobs - 1] = *(Job*)newJob;
 		}else{
 			jobs[numberOfBatchJobs - 1] = jobs[numberOfBatchJobs - 2];
-		}*/
+		}
 	}else{
 		jobs[numberOfBatchJobs - 1] = *newJob;
 	}
@@ -41,12 +41,12 @@ void removeTopJob(){
 	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs--;
-	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
+	jobs = (Job*)realloc( jobs,  numberOfBatchJobs * sizeof(Job) );
 
 	sem_post(&batch_jobs_mutex);
 }
 
-int addJob(Job *newJob){
+void addJob(Job *newJob){
 	sem_wait(&jobs_mutex);
 	Job *j = newJob;
 	
@@ -67,7 +67,6 @@ int addJob(Job *newJob){
 	fclose(f);
 
 	sem_post(&jobs_mutex);
-	return j->jid;
 }
 
 void changeJob(Job *job){
@@ -94,7 +93,6 @@ void changeJob(Job *job){
 			jobToString(job, line2);
 		}
 		fputs(line2, temp);
-		puts(line2);
 	}
 	fputs("\n", temp);
 	fclose(f);

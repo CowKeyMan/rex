@@ -38,7 +38,7 @@ void addBatchJob(Job *newJob); // insert item and sort, and set next job
 void removeTopJob(); // remove the item at the last
 void jobs_finish(); // do at exit
 
-int addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid
+void addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid
 void changeJob(Job *job); // change a job state int he status file given the job
 
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime);

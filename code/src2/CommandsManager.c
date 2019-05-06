@@ -33,6 +33,19 @@ void clientRun(char *message, char *destination){
   continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
 }
 
+void clientSubmit(char *message, char *destination){
+  char buffer[STRING_BUFFER_SIZE];
+
+  strncpy(buffer, "submit", STRING_BUFFER_SIZE);
+  strncat(buffer, " ", STRING_BUFFER_SIZE);
+  strncat(buffer, message, STRING_BUFFER_SIZE);
+
+  // send server submit _ _ _
+  char response[STRING_BUFFER_SIZE];
+  writeMessage_ToHost_GetResponse(buffer, destination, response);
+  printf("%s\n", response);
+}
+
 #include <stdlib.h>
 void serverRun(int sockfd, char ** paths, char **args){
   // fork child to execute the command
@@ -52,11 +65,10 @@ void serverRun(int sockfd, char ** paths, char **args){
     strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
     Job j = createJobNowPid(pid, hostName, command, INTERACTIVE, RUNNING);
     
-    int jid = addJob(&j);
+    addJob(&j);
     char jobString[STRING_BUFFER_SIZE];
   	jobToString(&j, jobString);
-    strncpy(hostName, jobString, STRING_BUFFER_SIZE);
-    printf("%s\n", hostName);
+
     // wait for child until it stops ab/normally
     int status = -1;
     while( !(WIFSIGNALED(status) || WIFEXITED(status)) ){
@@ -72,24 +84,36 @@ void serverRun(int sockfd, char ** paths, char **args){
     }
     changeJob(&j);
   } else {
-    fprintf(stderr, "Fork Failed");
+    writeMessage_ToSocket("Fork Failed", sockfd);
   }
-  // set the job to finished
-  /*j.state = FINISHED;
-  char changeJobCommand[STRING_BUFFER_SIZE];
-  strncpy(changeJobCommand, "change ", STRING_BUFFER_SIZE);
-  strncat(changeJobCommand, jobToString(&j), STRING_BUFFER_SIZE);
-  writeMessage_ToHost(changeJobCommand, NETWORK_MASTER);*/
 }
 
-void serverAdd(int sockfd, char **args){
+void serverSubmit(int sockfd, char **args){
+  // redirection of stderr in case of errors in the middle of submitting
+  dup2(sockfd, STDERR_FILENO);
+
+  //create jobString to send to file
+  char *date = args[0];
+  char *_time = args[1];
+  shiftStrings(args);
+  shiftStrings(args);
+  struct tm t;
+  sscanf(date, "%d/%d/%d", &t.tm_mday, &t.tm_mon, &t.tm_year);
+  sscanf(_time, "%d:%d:%d", &t.tm_hour, &t.tm_min, &t.tm_sec);
+  char command[STRING_BUFFER_SIZE];
+  concatenteStrings(args, command, STRING_BUFFER_SIZE);
+  char hostName[STRING_BUFFER_SIZE];
+  strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
+  Job j = createJob(hostName, command, BATCH, WAITING, &t);
+
+  addJob(&j);
+  
   char jobString[STRING_BUFFER_SIZE];
-  concatenteStrings(args, jobString, STRING_BUFFER_SIZE);
-  Job j = stringToJob(jobString);
-  int jid = addJob(&j);
-  char jidString[8];
-  sprintf(jidString, "%d\n", jid);
-  writeMessage_ToSocket(jidString, sockfd);
+  jobToString(&j, jobString);
+
+  addBatchJob(&j);
+  writeMessage_ToSocket("Acknowledged", sockfd);
+  close(sockfd);
 }
 
 bool changeCWD(char* newDir){

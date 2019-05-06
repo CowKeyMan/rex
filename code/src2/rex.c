@@ -23,8 +23,6 @@ int main(int argc, char *argv[]){
 }
 
 void computeArgs(char** args){
-	//splitStringBy(line, " ", args, STRING_BUFFER_AMOUNT);
-
 	// if no command is found
 	if(! args[1]){
 		error("No command found");
@@ -43,7 +41,11 @@ void computeArgs(char** args){
 		extractDestinationHard(args[2]);
     char dateTime[STRING_BUFFER_SIZE];
     extractTime(args[3], args[4], dateTime);
-    //clientSubmit(parameter, dateTime, responseBuffer, NETWORK_BUFFER_SIZE);
+		char message[STRING_BUFFER_SIZE];
+		strncpy(message, dateTime, STRING_BUFFER_SIZE);
+		strncat(message, " ", STRING_BUFFER_SIZE);
+		strncat(message, parameter, STRING_BUFFER_SIZE);
+    clientSubmit(message, destination);
 	}
   
   

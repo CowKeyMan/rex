@@ -51,23 +51,17 @@ void writeMessage_ToHost_GetResponse(char *message, char *hostname, char *respon
 		error("ERROR connecting");
 	}
 
-  while (( n = write(sockfd, message, NETWORK_BUFFER_SIZE) ) > 0){
-    bzero(network_buffer, NETWORK_BUFFER_SIZE);
-  }
-  if(n < 0){
+  if ( ( n = write(sockfd, message, NETWORK_BUFFER_SIZE) ) < 0){
     close(sockfd);
     error("ERROR writing to socket");
   }
 
-  char buffer[NETWORK_BUFFER_SIZE];
-  while( (n = read(sockfd, buffer, NETWORK_BUFFER_SIZE)) > 0){
-    strncat(responseBuffer, buffer, sizeof(responseBuffer));
-		bzero(network_buffer, NETWORK_BUFFER_SIZE);
-  }
-  if(n < 0){
+  bzero(network_buffer, NETWORK_BUFFER_SIZE);
+
+  if( (n = read(sockfd, responseBuffer, NETWORK_BUFFER_SIZE)) < 0){
     close(sockfd);
     error("ERROR reading from socket");
-	}
+  }
   
 	close(sockfd);
 }
