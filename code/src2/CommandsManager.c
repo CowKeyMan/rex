@@ -33,41 +33,47 @@ void clientRun(char *message, char *destination){
   continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
 }
 
+#include <stdlib.h>
 void serverRun(int sockfd, char ** paths, char **args){
-  // redirection of stdio
-  
-
-  // create jobString to send to master
-  /*char command[STRING_BUFFER_SIZE];
-  concatenteStrings(args, command, STRING_BUFFER_SIZE);
-  char hostName[STRING_BUFFER_SIZE];
-  strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
-  Job j = createJobNow(hostName, command, INTERACTIVE, RUNNING);
-  char *jobString = jobToString(&j);
-
-  //add the job to master's file
-  char addJobCommand[STRING_BUFFER_SIZE];
-  char jobIDString[STRING_BUFFER_SIZE];
-  strncpy(addJobCommand, "add ", STRING_BUFFER_SIZE);
-  strncat(addJobCommand, jobString, STRING_BUFFER_SIZE);
-  writeMessage_ToHost_GetResponse(addJobCommand, NETWORK_MASTER, jobIDString);*/
-
   // fork child to execute the command
   pid_t pid = fork();
   if (pid == 0) {
+    // redirection of stdio
     dup2(sockfd, STDIN_FILENO);
     dup2(sockfd, STDOUT_FILENO);
     dup2(sockfd, STDERR_FILENO);
     executeCommand(paths, args);
   }else if (pid > 0) {
-    // change process' pid given jid
-    // wait for child
-    int status;
-    waitpid(pid, &status, WUNTRACED);
+
+    //create jobString to send to file
+    char command[STRING_BUFFER_SIZE];
+    concatenteStrings(args, command, STRING_BUFFER_SIZE);
+    char hostName[STRING_BUFFER_SIZE];
+    strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
+    Job j = createJobNowPid(pid, hostName, command, INTERACTIVE, RUNNING);
+    
+    int jid = addJob(&j);
+    char jobString[STRING_BUFFER_SIZE];
+  	jobToString(&j, jobString);
+    strncpy(hostName, jobString, STRING_BUFFER_SIZE);
+    printf("%s\n", hostName);
+    // wait for child until it stops ab/normally
+    int status = -1;
+    while( !(WIFSIGNALED(status) || WIFEXITED(status)) ){
+      waitpid(pid, &status, WUNTRACED);
+    }
+
+    close(sockfd);
+    // chnge job to finished with its jid
+    if(WIFSIGNALED(status)){
+      j.state = TERMINATED;
+    }else if(WIFSIGNALED(status)){
+      j.state = FINISHED;
+    }
+    changeJob(&j);
   } else {
     fprintf(stderr, "Fork Failed");
   }
-
   // set the job to finished
   /*j.state = FINISHED;
   char changeJobCommand[STRING_BUFFER_SIZE];

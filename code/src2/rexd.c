@@ -3,6 +3,8 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <pthread.h>
+#include "semaphore.h"
 
 #include <stdio.h>
 
@@ -21,66 +23,37 @@ char *paths[STRING_BUFFER_SIZE] = {
 	"/usr/local/bin"
 };
 
-void sig_handler(int sig){
-  if (sig == SIGCHLD){
-    int status;
-    int i = waitpid(-1, &status, WNOHANG);
-    if(i > 0 && kill(i, 0) != 0) {
-      error("Error");
-    }
-  }
-}
-
-//Signal handler struct
-struct sigaction sa;
-void initializeSignalHandling();
-
 // read client and process the inputs
-void readClientCommand(int sockfd);
+void* readClientCommand(void *sockfd);
 
 int main(int argc, char *argv[]){
-  initializeSignalHandling();
+  
+  pthread_t thread;
+
   resetCWD();
+  jobs_init();
 
   int sockfd = startListening_ReturnSocket();
 
   while(true){
+    // continually accept clients
     int newsockfd = acceptClient_ReturnNewSocket(sockfd);
-
-    pid_t pid = fork();
     
-    if (pid < 0) { // error
-      close(sockfd);
-      close(newsockfd);
-      error("ERROR on fork");
+    //new thread to deal with client
+		if(pthread_create(&thread, NULL, readClientCommand, (void*)&newsockfd)){
+      // RETURN ERROR TO SOCKET
     }
-      
-    if (pid == 0)  { // child
-      close(sockfd);
-      readClientCommand(newsockfd);
-    }
-    
-    else{ // parent
-      close(newsockfd);
-    }
-  }
-
-  jobs_finish();
-}
-
-void initializeSignalHandling(){
-  // signal handler init
-  sa.sa_handler = sig_handler;
-  //Handle SIGINT, SIGCONT and SIGCHLD
-  if(/*sigaction(SIGINT, &sa, NULL) == -1 || sigaction(SIGTSTP, &sa, NULL) == -1 ||*/ sigaction(SIGCHLD, &sa, NULL) == -1){
-      error("ERROR, signals not catchable");
   }
 }
 
-void readClientCommand(int sockfd){
+void* readClientCommand(void *_sockfd){
   
+  int sockfd = *(int*)_sockfd;
+
   char buffer[STRING_BUFFER_SIZE];
   readSocket_IntoBuffer(sockfd, buffer);
+
+  printf("%s\n", buffer);
 
   char *args[STRING_BUFFER_AMOUNT];
   splitStringBy(buffer, " ", args, STRING_BUFFER_AMOUNT);

@@ -14,12 +14,12 @@
 
 void jobs_init(){
 	// semaphore chnged between prent and child
-	jobs_mutex = sem_open("/semaphoreJobs", O_CREAT,  0644, 1);
-	batch_jobs_mutex = sem_open("/semaphoreBatchJobs", O_CREAT,  0644, 1);
+	sem_init(&jobs_mutex, 0, 1);
+	sem_init(&batch_jobs_mutex, 0, 1);
 }
 
 void addBatchJob(Job *newJob){
-	sem_wait(batch_jobs_mutex);
+	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs++;
 	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
@@ -34,19 +34,20 @@ void addBatchJob(Job *newJob){
 		jobs[numberOfBatchJobs - 1] = *newJob;
 	}
 
-	sem_post(batch_jobs_mutex);
+	sem_post(&batch_jobs_mutex);
 }
 
 void removeTopJob(){
-	sem_wait(batch_jobs_mutex);
+	sem_wait(&batch_jobs_mutex);
 
 	numberOfBatchJobs--;
 	jobs = (Job*)malloc( numberOfBatchJobs * sizeof(Job) );
 
-	sem_post(batch_jobs_mutex);
+	sem_post(&batch_jobs_mutex);
 }
 
 int addJob(Job *newJob){
+	sem_wait(&jobs_mutex);
 	Job *j = newJob;
 	
 	numberOfJobs++;
@@ -58,22 +59,49 @@ int addJob(Job *newJob){
     error("Error opening file.");
 	}
 
-	char *newLine = jobToString(newJob);
+	char jobString[STRING_BUFFER_SIZE];
+	jobToString(newJob, jobString);
+	fprintf(f, "%s\n\n", jobString);
 
-	fprintf(f, "%s", newLine);
+	fclose(f);
 
+	sem_post(&jobs_mutex);
 	return j->jid;
 }
 
-void* changeJob(void *job){}
+void changeJob(Job *job){
+	sem_wait(&jobs_mutex);
+	// read file line by line until jid is found
+	// output each line to temp, unless jid matches jobID, then change it and write it
+	FILE *f;
+	FILE *temp;
+	if( !(f=fopen("a.txt", "r")) ) {
+    error("Error opening file");
+	}
+	if( !(f=fopen("temp.txt", "w")) ) {
+    error("Error opening file");
+	}
+
+
+	char line [2048];
+	while ( fgets ( line, 2048, f ) ){
+		fprintf(stdout, "%s\n\n", line);
+		/*Job j = stringToJob(line);
+		if(j.jid == (job)->jid){
+			jobToString(job, line);
+		}
+		fputs(line, temp);*/
+	}
+	fclose(temp);
+	fclose (f);
+	sem_post(&jobs_mutex);
+}
 
 void *getJob(void *jid){}
 
 void jobs_finish(){
-	sem_close(batch_jobs_mutex);
-	sem_unlink("/semaphoreBatchJobs");
-	sem_close(jobs_mutex);
-	sem_unlink("/semaphoreJobs");
+	sem_destroy(&batch_jobs_mutex);
+	sem_destroy(&jobs_mutex);
 }
 
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime){
@@ -151,7 +179,7 @@ Job stringToJob(char *string){
 	return j;
 }
 
-char *jobToString(Job *j){
+void jobToString(Job *j, char *stringBuffer){
 	Type type;
 	JobState status;
 
@@ -169,8 +197,6 @@ char *jobToString(Job *j){
 		default: break;
 	}
 
-	char string[STRING_BUFFER_SIZE];
-
 	char pid_jid[16];
 	sprintf(pid_jid, "%d %d ",
 		j->pid,
@@ -183,11 +209,8 @@ char *jobToString(Job *j){
 		j->dateTime.tm_mday, j->dateTime.tm_mon, j->dateTime.tm_year,
 		j->dateTime.tm_hour, j->dateTime.tm_min, j->dateTime.tm_sec);
 	
-	strncpy(string, pid_jid, STRING_BUFFER_SIZE);
-	strncat(string, j->host, STRING_BUFFER_SIZE);
-	strncat(string, status_type_dateTime, STRING_BUFFER_SIZE);
-	strncat(string, j->command, STRING_BUFFER_SIZE);
-
-	char *retString = string;
-	return retString;
+	strncpy(stringBuffer, pid_jid, STRING_BUFFER_SIZE);
+	strncat(stringBuffer, j->host, STRING_BUFFER_SIZE);
+	strncat(stringBuffer, status_type_dateTime, STRING_BUFFER_SIZE);
+	strncat(stringBuffer, j->command, STRING_BUFFER_SIZE);
 }

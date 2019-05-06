@@ -170,6 +170,7 @@ void continuouslyReadAndPrintFromSocketUntilEnd(int sockfd){
   bzero(buffer, NETWORK_BUFFER_SIZE);
   while( (n = read(sockfd, buffer, NETWORK_BUFFER_SIZE)) > 0){
     printf("%s", buffer);
+    bzero(buffer, NETWORK_BUFFER_SIZE);
   }
   if(n < 0){
     close(sockfd);
