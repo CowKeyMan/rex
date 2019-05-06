@@ -61,7 +61,8 @@ int addJob(Job *newJob){
 
 	char jobString[STRING_BUFFER_SIZE];
 	jobToString(newJob, jobString);
-	fprintf(f, "%s\n\n", jobString);
+	strncat(jobString, "\r\n", STRING_BUFFER_SIZE);
+	fputs(jobString, f);
 
 	fclose(f);
 
@@ -73,27 +74,36 @@ void changeJob(Job *job){
 	sem_wait(&jobs_mutex);
 	// read file line by line until jid is found
 	// output each line to temp, unless jid matches jobID, then change it and write it
+	char *temporaryFileName = "temp.txt";
+
 	FILE *f;
 	FILE *temp;
-	if( !(f=fopen("a.txt", "r")) ) {
+	if( !(f=fopen(JOBS_FILENAME, "r")) ) {
     error("Error opening file");
 	}
-	if( !(f=fopen("temp.txt", "w")) ) {
+	if( !(temp=fopen(temporaryFileName, "w")) ) {
     error("Error opening file");
 	}
 
-
-	char line [2048];
-	while ( fgets ( line, 2048, f ) ){
-		fprintf(stdout, "%s\n\n", line);
-		/*Job j = stringToJob(line);
-		if(j.jid == (job)->jid){
-			jobToString(job, line);
+	char line [STRING_BUFFER_SIZE];
+	char line2[STRING_BUFFER_SIZE];
+	while ( fgets ( line, STRING_BUFFER_SIZE, f ) ){
+		strncpy(line2, line, STRING_BUFFER_SIZE);
+		Job j = stringToJob(line);
+		if(j.jid == job->jid){
+			job->state = FINISHED;
+			jobToString(job, line2);
 		}
-		fputs(line, temp);*/
+		fputs(line2, temp);
+		puts(line2);
 	}
-	fclose(temp);
-	fclose (f);
+	fputs("\n", temp);
+	fclose(f);
+	fclose (temp);
+
+	remove(JOBS_FILENAME);
+	rename(temporaryFileName, JOBS_FILENAME);
+
 	sem_post(&jobs_mutex);
 }
 

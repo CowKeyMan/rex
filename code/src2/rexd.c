@@ -27,7 +27,6 @@ char *paths[STRING_BUFFER_SIZE] = {
 void* readClientCommand(void *sockfd);
 
 int main(int argc, char *argv[]){
-  
   pthread_t thread;
 
   resetCWD();
