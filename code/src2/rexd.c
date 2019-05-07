@@ -93,6 +93,10 @@ void* readClientCommand(void *_sockfd){
   }else if(strncmp("copyToServer", args[0], STRING_BUFFER_SIZE) == 0){
     serverCopyFromClient(sockfd, args[1]);
     close(sockfd);
+  }else if(strncmp("kill", args[0], STRING_BUFFER_SIZE) == 0){
+    shiftStrings(args);
+    serverKill(sockfd, args);
+    close(sockfd);
   }
 }
 

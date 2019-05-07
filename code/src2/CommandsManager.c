@@ -124,6 +124,23 @@ void clientCopyToServer(char *fileName, char *destination, char *fileNameOnServe
   fclose(f);
 }
 
+void clientKill(char *_jid, char *mode, char *_gracePeriod){
+  char message[STRING_BUFFER_SIZE];
+  if( (int jid = atoi(_jid)) <= 0 ){
+    error("Invalid job ID");
+  }
+  int gracePeriod = atoi(_gracePeriod);
+  if(!(strncmp(mode, "soft", STRING_BUFFER_SIZE) == 0
+    || strncmp(mode, "hard", STRING_BUFFER_SIZE) == 0
+    || strncmp(mode, "nice", STRING_BUFFER_SIZE) == 0)){
+      error("kill mode invalid");
+    }
+  sprintf(message, "%d %s %s", jid, mode, _gracePeriod);
+  char response[STRING_BUFFER_SIZE];
+  writeMessage_ToHost_GetResponse(message, NETWORK_MASTER, response);
+  printf("%s\n", response);
+}
+
 void serverRun(int sockfd, char ** paths, char **args){
   // fork child to execute the command
   pid_t pid = fork();
@@ -286,4 +303,16 @@ void serverCopyToClient(int sockfd, char *fileNameOnServer){
 
   close(sockfd);
   fclose(f);
+}
+
+void serverKill(int sockfd, char **args){
+  int jid = atoi(args[0]);
+  char *mode = args[1];
+  int gracePeriod = atoi(args[2]);
+  // get job id, see if is valid
+  // if job id is valid:
+  //    if it is running, send appropriate signals
+  //    if it is wating, the remove it from batch processes
+  //    set job status to terminated
+  //    send appropriate message back to client
 }

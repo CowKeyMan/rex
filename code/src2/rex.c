@@ -29,6 +29,10 @@ void computeArgs(char** args){
 		return;
 	}else{
 		if(strncmp("status", args[1], STRING_BUFFER_SIZE) == 0){
+			if(args[2]){
+				clientStatus(args[2]);
+				return;
+			}
 			clientStatus(NETWORK_MASTER);
 			return;
 		} else if(! args[2]){
@@ -65,6 +69,14 @@ void computeArgs(char** args){
 	}else if(strncmp("chdir", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
 		clientChdir(parameter, destination);
+	}else if(strncmp("kill", args[1], STRING_BUFFER_SIZE) == 0){
+		if(args[3] && !args[4]){
+			clientKill(args[2], args[3], "1");
+		} else if (args[3] && args[4]){
+			clientKill(args[2], args[3], args[4]);
+		}else{
+			error("Incorrect use of kill");
+		}
 	}else{
 		error("Command not found");
 	}
