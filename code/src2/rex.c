@@ -28,7 +28,10 @@ void computeArgs(char** args){
 		error("No command found");
 		return;
 	}else{
-		if(! args[2]){
+		if(strncmp("status", args[1], STRING_BUFFER_SIZE) == 0){
+			clientStatus(NETWORK_MASTER);
+			return;
+		} else if(! args[2]){
 			error("No parameter found");
 			return;
 		}
@@ -37,7 +40,8 @@ void computeArgs(char** args){
 	if(strncmp("run", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
 		clientRun(parameter, destination);
-	}else if(strncmp("submit", args[1], STRING_BUFFER_SIZE) == 0){
+	}
+	else if(strncmp("submit", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
     char dateTime[STRING_BUFFER_SIZE];
     extractTime(args[3], args[4], dateTime);
@@ -47,22 +51,19 @@ void computeArgs(char** args){
 		strncat(message, parameter, STRING_BUFFER_SIZE);
     clientSubmit(message, destination);
 	}
-  
-  
   else if(strncmp("kill", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
-	}else if(strncmp("status", args[1], STRING_BUFFER_SIZE) == 0){
-		extractDestinationHard(args[2]);
 	}else if(strncmp("copy", args[1], STRING_BUFFER_SIZE) == 0){
-		if(extractDestination(args[2])){
-
+		if(extractDestination(args[2]) && args[3]){
+			clientCopyFromServer(parameter, destination, args[3]);
 		}
 		else if(args[3] && extractDestination(args[3])){
-
+			clientCopyToServer(args[2], destination, parameter);
+		}else{
+			error("Incorrect use of copy command");
 		}
 	}else if(strncmp("chdir", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
-		printf("%s\n", destination);
 		clientChdir(parameter, destination);
 	}else{
 		error("Command not found");

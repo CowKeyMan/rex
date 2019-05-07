@@ -82,14 +82,16 @@ void changeJob(Job *job){
 	sem_wait(&jobs_mutex);
 	// read file line by line until jid is found
 	// output each line to temp, unless jid matches jobID, then change it and write it
+	FILE *f;
+	FILE *temp;
+
 	char temporaryFileName[STRING_BUFFER_SIZE];
 	strncpy(temporaryFileName, serverStartingCWD, STRING_BUFFER_SIZE);
 	strncat(temporaryFileName, "/temp.txt", STRING_BUFFER_SIZE);
 
-	FILE *f;
-	FILE *temp;
 	char fileName[STRING_BUFFER_SIZE];
 	sprintf(fileName, "%s/%s", serverStartingCWD, JOBS_FILENAME);
+
 	if( !(f=fopen(fileName, "r")) ) {
     error("Error opening file");
 	}
@@ -145,6 +147,8 @@ Job createJobNowPid(int pid, char *host, char *command, Type type, JobState stat
 	time_t t = time(NULL);
 	struct tm *lt = localtime(&t);
 
+	lt->tm_year += 1900;
+	
 	return createJobPid(pid, host, command, type, state, lt);
 }
 

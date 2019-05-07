@@ -41,7 +41,6 @@ int main(int argc, char *argv[]){
 
   resetCWD();
   jobs_init();
-	remove(JOBS_FILENAME); // reset jobs file, mostly for easier debugging
 
   //new thread to deal with client
   if(pthread_create(&pollingThread, NULL, pollThread, NULL)){
@@ -82,8 +81,17 @@ void* readClientCommand(void *_sockfd){
     shiftStrings(args);
     serverSubmit(sockfd, args);
     close(sockfd);
+  }else if(strncmp("status", args[0], STRING_BUFFER_SIZE) == 0){
+    serverStatus(sockfd);
+    close(sockfd);
   }else if(strncmp("chdir", args[0], STRING_BUFFER_SIZE) == 0){
     serverChdir(sockfd, args[1]);
+    close(sockfd);
+  }else if(strncmp("copyFromServer", args[0], STRING_BUFFER_SIZE) == 0){
+    serverCopyToClient(sockfd, args[1]);
+    close(sockfd);
+  }else if(strncmp("copyToServer", args[0], STRING_BUFFER_SIZE) == 0){
+    serverCopyFromClient(sockfd, args[1]);
     close(sockfd);
   }
 }
@@ -178,6 +186,7 @@ void *handleChild(void *job){
 }
 
 void resetOutputFileDirectory(){
+  mkdir("Jobs", S_IRUSR | S_IWUSR | S_IXUSR);
   remove(JOBS_FILENAME);
   for(int i = 0; remove("Jobs") == -1; ++i) {
     FILE *f;
@@ -189,4 +198,6 @@ void resetOutputFileDirectory(){
     }
   }
   mkdir("Jobs", S_IRUSR | S_IWUSR | S_IXUSR);
+  FILE *f = fopen(JOBS_FILENAME, "w");
+  fclose(f);
 }

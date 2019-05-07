@@ -34,7 +34,7 @@ void writeMessage_ToHost_GetResponse(char *message, char *hostname, char *respon
   // Get server name 
 	if ((server = gethostbyname(hostname)) == NULL) {
 		close(sockfd);
-		error("ERROR, no such host\n");
+		error("ERROR, no such host");
 	} 
 
 	// Populate serv_addr structure 
@@ -81,7 +81,7 @@ void writeMessage_ToHost(char *message, char *hostname){
   // Get server name 
 	if ((server = gethostbyname(hostname)) == NULL) {
 		close(sockfd);
-		error("ERROR, no such host\n");
+		error("ERROR, no such host");
 	} 
 
 	// Populate serv_addr structure 
@@ -124,7 +124,7 @@ int writeMessage_ToHost_ReturnSocket(char *message, char *hostname){
   // Get server name 
 	if ((server = gethostbyname(hostname)) == NULL) {
 		close(sockfd);
-		error("ERROR, no such host\n");
+		error("ERROR, no such host");
 	} 
 
 	// Populate serv_addr structure 
