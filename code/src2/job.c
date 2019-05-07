@@ -39,22 +39,24 @@ void addBatchJob(Job *newJob){
 
 int getNoOfBatchJobs(){
 	sem_wait(&batch_jobs_mutex);
+
 	int i = numberOfBatchJobs;
+	
 	sem_post(&batch_jobs_mutex);
 	return i;
 }
 
 void removeTopJob(){
 	sem_wait(&batch_jobs_mutex);
-
 	numberOfBatchJobs--;
 	jobs = (Job*)realloc( jobs,  numberOfBatchJobs * sizeof(Job) );
-
 	sem_post(&batch_jobs_mutex);
 }
 
 void addJob(Job *newJob){
 	sem_wait(&jobs_mutex);
+	sem_wait(&batch_jobs_mutex);
+	
 	Job *j = newJob;
 	
 	numberOfJobs++;
@@ -75,11 +77,14 @@ void addJob(Job *newJob){
 
 	fclose(f);
 
+	sem_post(&batch_jobs_mutex);
 	sem_post(&jobs_mutex);
 }
 
 void changeJob(Job *job){
 	sem_wait(&jobs_mutex);
+	sem_wait(&batch_jobs_mutex);
+
 	// read file line by line until jid is found
 	// output each line to temp, unless jid matches jobID, then change it and write it
 	FILE *f;
@@ -109,6 +114,7 @@ void changeJob(Job *job){
 		}
 		fputs(line2, temp);
 	}
+
 	fputs("\n", temp);
 	fclose(f);
 	fclose (temp);
@@ -117,6 +123,7 @@ void changeJob(Job *job){
 	rename(temporaryFileName, fileName);
 
 	sem_post(&jobs_mutex);
+	sem_post(&batch_jobs_mutex);
 }
 
 void *getJob(void *jid){}

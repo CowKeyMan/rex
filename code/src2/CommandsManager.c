@@ -126,7 +126,8 @@ void clientCopyToServer(char *fileName, char *destination, char *fileNameOnServe
 
 void clientKill(char *_jid, char *mode, char *_gracePeriod){
   char message[STRING_BUFFER_SIZE];
-  if( (int jid = atoi(_jid)) <= 0 ){
+  int jid = 0;
+  if( (jid = atoi(_jid)) <= 0 ){
     error("Invalid job ID");
   }
   int gracePeriod = atoi(_gracePeriod);
@@ -135,7 +136,7 @@ void clientKill(char *_jid, char *mode, char *_gracePeriod){
     || strncmp(mode, "nice", STRING_BUFFER_SIZE) == 0)){
       error("kill mode invalid");
     }
-  sprintf(message, "%d %s %s", jid, mode, _gracePeriod);
+  sprintf(message, "%d %s %d", jid, mode, gracePeriod);
   char response[STRING_BUFFER_SIZE];
   writeMessage_ToHost_GetResponse(message, NETWORK_MASTER, response);
   printf("%s\n", response);

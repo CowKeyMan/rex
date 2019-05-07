@@ -54,9 +54,6 @@ void computeArgs(char** args){
 		strncat(message, " ", STRING_BUFFER_SIZE);
 		strncat(message, parameter, STRING_BUFFER_SIZE);
     clientSubmit(message, destination);
-	}
-  else if(strncmp("kill", args[1], STRING_BUFFER_SIZE) == 0){
-		extractDestinationHard(args[2]);
 	}else if(strncmp("copy", args[1], STRING_BUFFER_SIZE) == 0){
 		if(extractDestination(args[2]) && args[3]){
 			clientCopyFromServer(parameter, destination, args[3]);
