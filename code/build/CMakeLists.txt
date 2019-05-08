@@ -2,12 +2,14 @@ cmake_minimum_required (VERSION 2.6)
 
 project (REX C)
 
+file(MAKE_DIRECTORY executables)
+
 find_package (Threads)
 
-add_executable(executables/rex ../src2/rex.c  ../src2/Helper.c ../src2/job.c ../src2/MyTime.c ../src2/Network.c ../src2/StringManipulator.c  ../src2/CommandsManager.c)
+add_executable(executables/rex ../src/rex.c  ../src/Helper.c ../src/job.c ../src/MyTime.c ../src/Network.c ../src/StringManipulator.c  ../src/CommandsManager.c)
 target_link_libraries (executables/rex ${CMAKE_THREAD_LIBS_INIT})
 
-add_executable(executables/rexd ../src2/rexd.c  ../src2/Helper.c ../src2/job.c ../src2/MyTime.c ../src2/Network.c ../src2/StringManipulator.c  ../src2/CommandsManager.c)
+add_executable(executables/rexd ../src/rexd.c  ../src/Helper.c ../src/job.c ../src/MyTime.c ../src/Network.c ../src/StringManipulator.c  ../src/CommandsManager.c)
 target_link_libraries (executables/rexd ${CMAKE_THREAD_LIBS_INIT})
 
 if ( CMAKE_COMPILER_IS_GNUCC )
