@@ -231,33 +231,35 @@ void serverStatus(int sockfd){
 	}
 
 	char line [STRING_BUFFER_SIZE];
-	while ( fgets ( line, STRING_BUFFER_SIZE, f ) ){
-		Job j = stringToJob(line);
-    char state[16];
-    char type[16];
-    char buffer[STRING_BUFFER_SIZE * 4];
-    switch(j.state){
-      case WAITING: strncpy(state, "WAITING", STRING_BUFFER_SIZE); break;
-      case RUNNING: strncpy(state, "RUNNING", STRING_BUFFER_SIZE); break;
-      case TERMINATED: strncpy(state, "TERMINATED", STRING_BUFFER_SIZE); break;
-      case FINISHED: strncpy(state, "FINISHED", STRING_BUFFER_SIZE); break;
+	while ( fgets ( line, STRING_BUFFER_SIZE, f )){
+    if( strlen(line) > 2 ){
+      Job j = stringToJob(line);
+      char state[16];
+      char type[16];
+      char buffer[STRING_BUFFER_SIZE * 4];
+      switch(j.state){
+        case WAITING: strncpy(state, "WAITING\t", STRING_BUFFER_SIZE); break;
+        case RUNNING: strncpy(state, "RUNNING\t", STRING_BUFFER_SIZE); break;
+        case TERMINATED: strncpy(state, "TERMINATED", STRING_BUFFER_SIZE); break;
+        case FINISHED: strncpy(state, "FINISHED", STRING_BUFFER_SIZE); break;
+      }
+      switch(j.type){
+        case INTERACTIVE: strncpy(type, "INTERACTIVE", STRING_BUFFER_SIZE); break;
+        case BATCH: strncpy(type, "BATCH\t", STRING_BUFFER_SIZE); break;
+      }
+      char command[STRING_BUFFER_SIZE];
+      strncpy(command, j.command, STRING_BUFFER_SIZE);
+      command[strlen(command) - 1] = '\0'; // change '\n' to '\0' to not skip line
+      sprintf(buffer, "%d\t\t%s\t\t%s\t\t%s\t%s\t%d/%d/%d\t%d:%d:%d\n",
+        j.jid,
+        j.host,
+        command,
+        type,
+        state,
+        j.dateTime.tm_mday, j.dateTime.tm_mon, j.dateTime.tm_year,
+        j.dateTime.tm_hour, j.dateTime.tm_min, j.dateTime.tm_sec);
+      writeMessage_ToSocket(buffer, sockfd);
     }
-    switch(j.type){
-      case INTERACTIVE: strncpy(type, "INTERACTIVE", STRING_BUFFER_SIZE); break;
-      case BATCH: strncpy(type, "BATCH\t", STRING_BUFFER_SIZE); break;
-    }
-    char command[STRING_BUFFER_SIZE];
-    strncpy(command, j.command, STRING_BUFFER_SIZE);
-    command[strlen(command) - 1] = '\0'; // change '\n' to '\0' to not skip line
-    sprintf(buffer, "%d\t\t%s\t\t%s\t\t%s\t%s\t%d/%d/%d\t%d:%d:%d\n",
-      j.jid,
-      j.host,
-      command,
-      type,
-      state,
-      j.dateTime.tm_mday, j.dateTime.tm_mon, j.dateTime.tm_year,
-      j.dateTime.tm_hour, j.dateTime.tm_min, j.dateTime.tm_sec);
-    writeMessage_ToSocket(buffer, sockfd);
 	}
 	fclose(f);
   close(sockfd);

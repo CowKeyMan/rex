@@ -72,11 +72,10 @@ void addJob(Job *newJob){
 
 	char jobString[STRING_BUFFER_SIZE];
 	jobToString(newJob, jobString);
-	strncat(jobString, "\r\n", STRING_BUFFER_SIZE);
+	jobString[strlen(jobString)] = '\n';
 	fputs(jobString, f);
 
 	fclose(f);
-
 	sem_post(&batch_jobs_mutex);
 	sem_post(&jobs_mutex);
 }
@@ -107,15 +106,21 @@ void changeJob(Job *job){
 	char line [STRING_BUFFER_SIZE];
 	char line2[STRING_BUFFER_SIZE];
 	while ( fgets ( line, STRING_BUFFER_SIZE, f ) ){
-		strncpy(line2, line, STRING_BUFFER_SIZE);
-		Job j = stringToJob(line);
-		if(j.jid == job->jid){
-			jobToString(job, line2);
+		if(strlen(line) > 2){
+			strncpy(line2, line, STRING_BUFFER_SIZE);
+			Job j = stringToJob(line);
+			if(j.jid == job->jid){
+				jobToString(job, line2);
+			}else{
+				jobToString(&j, line2);
+			}
+			line2[strlen(line2)] = '\n';
+			fputs(line2, temp);
+			fprintf(f, "%s", "\r\n");
 		}
-		fputs(line2, temp);
 	}
-
-	fputs("\n", temp);
+	
+	
 	fclose(f);
 	fclose (temp);
 
