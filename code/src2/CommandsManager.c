@@ -75,10 +75,10 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
 
   remove(fileNameOnClient);
 
-  int f;
-  if( !(f = open(fileNameOnClient, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR) ) ) {
-    error("Error creating file");
-  }
+  FILE *f;
+  if( !(f=fopen(fileName, "wb")) ) {
+    error("Error opening file.");
+	}
 
   int sockfd = writeMessage_ToHost_ReturnSocket(message, destination);
 
@@ -86,9 +86,9 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
   pid_t pid = fork();
   if (pid == 0) {
     // redirection of stdio
-    dup2(f, STDOUT_FILENO);
+    dup2(fileno(f), STDOUT_FILENO);
     continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
-    close(f);
+    fclose(f);
     exit(EXIT_SUCCESS);
   }else if (pid > 0) {
     // wait for child until it stops ab/normally
@@ -97,7 +97,7 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
       waitpid(pid, &status, WUNTRACED);
     }
     close(sockfd);
-    close(f);
+    fclose(f);
   } else {
     error("Fork Failed");
   }
@@ -109,7 +109,7 @@ void clientCopyToServer(char *fileName, char *destination, char *fileNameOnServe
 
   FILE *f;
 
-	if( !(f=fopen(fileName, "r")) ) {
+	if( !(f=fopen(fileName, "rb")) ) {
     error("Error opening file.");
 	}
 
@@ -267,18 +267,18 @@ void serverStatus(int sockfd){
 
 void serverCopyFromClient(int sockfd, char *fileNameOnServer){
   remove(fileNameOnServer);
-  int f;
-  if( !(f = open(fileNameOnServer, O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR) ) ) {
-    error("Error creating file");
-  }
+  FILE *f;
+  if( !(f=fopen(fileNameOnServer, "wb")) ) {
+    error("Error opening file.");
+	}
 
   // fork child to execute the command
   pid_t pid = fork();
   if (pid == 0) {
     // redirection of stdio
-    dup2(f, STDOUT_FILENO);
+    dup2(fileno(f), STDOUT_FILENO);
     continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
-    close(f);
+    fclose(f);
     exit(EXIT_SUCCESS);
   }else if (pid > 0) {
     // wait for child until it stops ab/normally
@@ -287,7 +287,7 @@ void serverCopyFromClient(int sockfd, char *fileNameOnServer){
       waitpid(pid, &status, WUNTRACED);
     }
     close(sockfd);
-    close(f);
+    fclose(f);
   } else {
     error("Fork Failed");
   }
@@ -295,7 +295,7 @@ void serverCopyFromClient(int sockfd, char *fileNameOnServer){
 void serverCopyToClient(int sockfd, char *fileNameOnServer){
   FILE *f;
 
-	if( !(f=fopen(fileNameOnServer, "r")) ) {
+	if( !(f=fopen(fileNameOnServer, "rb")) ) {
     error("Error opening file.");
 	}
 
