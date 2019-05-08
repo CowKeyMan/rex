@@ -312,11 +312,48 @@ void serverKill(int sockfd, char **args){
   int jid = atoi(args[0]);
   char *mode = args[1];
   int gracePeriod = atoi(args[2]);
-  printf("%d %s %d\n", jid, mode, gracePeriod);
+
+  Job *j;
+  if( (j = getJob(jid)) == NULL){
+    writeMessage_ToSocket("Job not found", sockfd);
+    close(sockfd);
+    return;
+  }
+  
+  if(j->state == RUNNING){
+    if(strncmp(mode, "nice", STRING_BUFFER_SIZE) == 0){
+      kill(j->pid, SIGTERM);
+      if(kill(j->pid, 0) == 0){
+        writeMessage_ToSocket("Child did not die :/", sockfd);
+        close(sockfd);
+        return;
+      }
+    }else if(strncmp(mode, "hard", STRING_BUFFER_SIZE) == 0){
+      kill(j->pid, SIGKILL);
+    }else if(strncmp(mode, "soft", STRING_BUFFER_SIZE) == 0){
+      kill(j->pid, SIGTERM);
+      sleep(gracePeriod);
+      if(kill(j->pid, 0) == 0){
+        kill(j->pid, SIGKILL);
+      }
+    }
+  }else if(j->state == WAITING){
+    removeJob(jid);
+  }else{
+    writeMessage_ToSocket("Process is already stopped", sockfd);
+    close(sockfd);
+    return;
+  }
+
+  j->state = TERMINATED;
+  changeJob(j);
+
+  writeMessage_ToSocket("Process beheaded", sockfd);
+  close(sockfd);
   // get job id, see if is valid
   // if job id is valid:
   //    if it is running, send appropriate signals
   //    if it is wating, the remove it from batch processes
   //    set job status to terminated
-  //    send appropriate message back to client while(sleep 1)->increase counter until grace period
+  //    send appropriate message back to client sleep(x) x = grace period
 }

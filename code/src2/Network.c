@@ -12,8 +12,11 @@
 
 void writeMessage_ToSocket(char *message, int sockfd){
   // Send message to the server
+  char network_buffer[STRING_BUFFER_SIZE];
+  bzero(network_buffer, strlen(network_buffer));
+  strncpy(network_buffer, message, STRING_BUFFER_SIZE);
   int n;
-  if ((n = write(sockfd, message, strlen(message))) < 0){
+  if ((n = write(sockfd, network_buffer, STRING_BUFFER_SIZE)) < 0){
     close(sockfd);
     error("ERROR writing to socket");
   }

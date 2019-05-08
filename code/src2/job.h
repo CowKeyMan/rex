@@ -37,6 +37,7 @@ void jobs_init(); // initialize semaphore
 void addBatchJob(Job *newJob); // insert item and sort, and set next job
 int getNoOfBatchJobs(); // safely get no of batch jobs
 void removeTopJob(); // remove the item at the last
+void removeJob(int jid);
 void jobs_finish(); // do at exit
 
 void addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid

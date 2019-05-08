@@ -53,6 +53,21 @@ void removeTopJob(){
 	sem_post(&batch_jobs_mutex);
 }
 
+void removeJob(int jid){
+	sem_wait(&batch_jobs_mutex);
+	for(int i = 0; i < numberOfBatchJobs; ++i){
+		if(jobs[i].jid == jid){
+			for(int j = i+1; j < numberOfBatchJobs; ++j){
+				jobs[j - 1] = jobs[j];
+			}
+			break;
+		}
+	}
+	numberOfBatchJobs--;
+	jobs = (Job*)realloc( jobs,  numberOfBatchJobs * sizeof(Job) );
+	sem_post(&batch_jobs_mutex);
+}
+
 void addJob(Job *newJob){
 	sem_wait(&jobs_mutex);
 	sem_wait(&batch_jobs_mutex);
