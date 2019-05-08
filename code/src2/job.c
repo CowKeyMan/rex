@@ -131,7 +131,31 @@ void changeJob(Job *job){
 	sem_post(&batch_jobs_mutex);
 }
 
-void *getJob(void *jid){}
+Job *getJob(int jid){
+	sem_wait(&jobs_mutex);
+
+	FILE *f;
+	char fileName[STRING_BUFFER_SIZE];
+	sprintf(fileName, "%s/%s", serverStartingCWD, JOBS_FILENAME);
+	if( !(f=fopen(fileName, "r")) ) {
+    error("Error opening file");
+	}
+
+	char line [STRING_BUFFER_SIZE];
+	while ( fgets ( line, STRING_BUFFER_SIZE, f ) ){
+		if(strlen(line) > 2){
+			Job *j = (Job*)malloc(sizeof(Job));
+			*j = stringToJob(line);
+			if(j->jid == jid){
+				sem_post(&jobs_mutex);
+				return j;
+			}
+		}
+	}
+
+	sem_post(&jobs_mutex);
+	return NULL;
+}
 
 void jobs_finish(){
 	sem_destroy(&batch_jobs_mutex);

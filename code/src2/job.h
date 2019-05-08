@@ -41,6 +41,7 @@ void jobs_finish(); // do at exit
 
 void addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid
 void changeJob(Job *job); // change a job state int he status file given the job
+Job *getJob(int jid); // get a job given its ID, returns null if not found
 
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime);
 Job createJob(char *host, char *command, Type type, JobState state, struct tm *dateTime);

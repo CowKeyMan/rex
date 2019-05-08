@@ -136,7 +136,7 @@ void clientKill(char *_jid, char *mode, char *_gracePeriod){
     || strncmp(mode, "nice", STRING_BUFFER_SIZE) == 0)){
       error("kill mode invalid");
     }
-  sprintf(message, "%d %s %d", jid, mode, gracePeriod);
+  sprintf(message, "kill %d %s %d", jid, mode, gracePeriod);
   char response[STRING_BUFFER_SIZE];
   writeMessage_ToHost_GetResponse(message, NETWORK_MASTER, response);
   printf("%s\n", response);
@@ -312,10 +312,11 @@ void serverKill(int sockfd, char **args){
   int jid = atoi(args[0]);
   char *mode = args[1];
   int gracePeriod = atoi(args[2]);
+  printf("%d %s %d\n", jid, mode, gracePeriod);
   // get job id, see if is valid
   // if job id is valid:
   //    if it is running, send appropriate signals
   //    if it is wating, the remove it from batch processes
   //    set job status to terminated
-  //    send appropriate message back to client
+  //    send appropriate message back to client while(sleep 1)->increase counter until grace period
 }
