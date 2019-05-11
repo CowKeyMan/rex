@@ -122,8 +122,7 @@ void *pollThread(){
       if( timeBiggerThan( lt , &topJob.dateTime) == true ) {
         topJob.state = RUNNING;
         changeJob(&topJob);
-        //GET JOB, OPEN FILE, redirect stdout of child to file & stderr, close stdin of child, in parent change the child, in signal handler for child lookup child by pid and change the status to finished
-
+        
         // fork child to execute the command
         pid_t pid = fork();
         if (pid == 0) {
@@ -185,13 +184,16 @@ void *handleChild(void *job){
   }else if(WIFEXITED(status)){
     j.state = FINISHED;
   }
+
   changeJob(&j);
+
   pthread_exit(NULL);
 }
 
 void resetOutputFileDirectory(){
   mkdir("Jobs", S_IRUSR | S_IWUSR | S_IXUSR);
   remove(JOBS_FILENAME);
+
   for(int i = 0; remove("Jobs") == -1; ++i) {
     FILE *f;
     char fileName[STRING_BUFFER_SIZE];
@@ -201,7 +203,9 @@ void resetOutputFileDirectory(){
       remove(fileName);
     }
   }
+
   mkdir("Jobs", S_IRUSR | S_IWUSR | S_IXUSR);
   FILE *f = fopen(JOBS_FILENAME, "w");
+
   fclose(f);
 }

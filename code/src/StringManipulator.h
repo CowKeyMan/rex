@@ -7,7 +7,7 @@ void splitStringBy(char *delims, char* splitString, char** returnArgs, int buffe
 //Parser with an entire string as delimeter
 void splitStringByString(char *string, char* splitString, char** returnArgs, int bufferAmount, int bufferSize);
 
-//Method to remove spaces from the beginning and end of the word
+//Method to remove spaces from the beginning and end of a string
 void removeSpaces(char* string, int bufferSize);
 
 // check if string is just spaces

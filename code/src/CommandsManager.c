@@ -26,7 +26,6 @@ void executeCommand(char **paths, char **args){
 
 void clientRun(char *message, char *destination){
   char buffer[STRING_BUFFER_SIZE];
-
   strncpy(buffer, "run", STRING_BUFFER_SIZE);
   strncat(buffer, " ", STRING_BUFFER_SIZE);
   strncat(buffer, message, STRING_BUFFER_SIZE);
@@ -38,7 +37,6 @@ void clientRun(char *message, char *destination){
 
 void clientSubmit(char *message, char *destination){
   char buffer[STRING_BUFFER_SIZE];
-
   strncpy(buffer, "submit", STRING_BUFFER_SIZE);
   strncat(buffer, " ", STRING_BUFFER_SIZE);
   strncat(buffer, message, STRING_BUFFER_SIZE);
@@ -46,12 +44,12 @@ void clientSubmit(char *message, char *destination){
   // send server submit _ _ _
   char response[STRING_BUFFER_SIZE];
   writeMessage_ToHost_GetResponse(buffer, destination, response);
+
   printf("%s\n", response);
 }
 
 void clientChdir(char *message, char *destination){
   char buffer[STRING_BUFFER_SIZE];
-
   strncpy(buffer, "chdir", STRING_BUFFER_SIZE);
   strncat(buffer, " ", STRING_BUFFER_SIZE);
   strncat(buffer, message, STRING_BUFFER_SIZE);
@@ -59,12 +57,14 @@ void clientChdir(char *message, char *destination){
   // send server chdir
   char response[STRING_BUFFER_SIZE];
   writeMessage_ToHost_GetResponse(buffer, destination, response);
+
   printf("%s\n", response);
 }
 
 void clientStatus(char *destination){
   // send server status
   int sockfd = writeMessage_ToHost_ReturnSocket("status", destination);
+
   continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
 }
 
@@ -72,11 +72,10 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
   char message[STRING_BUFFER_SIZE];
   strncpy(message, "copyFromServer ", STRING_BUFFER_SIZE);
   strncat(message, fileName, STRING_BUFFER_SIZE);
-
   remove(fileNameOnClient);
 
   FILE *f;
-  if( !(f=fopen(fileName, "wb")) ) {
+  if( !(f=fopen(fileNameOnClient, "wb")) ) {
     error("Error opening file.");
 	}
 
@@ -87,7 +86,9 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
   if (pid == 0) {
     // redirection of stdio
     dup2(fileno(f), STDOUT_FILENO);
+
     continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
+
     fclose(f);
     exit(EXIT_SUCCESS);
   }else if (pid > 0) {
@@ -96,6 +97,7 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
     while( !(WIFSIGNALED(status) || WIFEXITED(status)) ){
       waitpid(pid, &status, WUNTRACED);
     }
+
     close(sockfd);
     fclose(f);
   } else {
@@ -103,17 +105,15 @@ void clientCopyFromServer(char *fileName, char *destination, char *fileNameOnCli
   }
 }
 void clientCopyToServer(char *fileName, char *destination, char *fileNameOnServer){
-  char message[STRING_BUFFER_SIZE];
+	char message[STRING_BUFFER_SIZE];
   strncpy(message, "copyToServer ", STRING_BUFFER_SIZE);
   strncat(message, fileNameOnServer, STRING_BUFFER_SIZE);
+  int sockfd = writeMessage_ToHost_ReturnSocket(message, destination);
 
   FILE *f;
-
 	if( !(f=fopen(fileName, "rb")) ) {
     error("Error opening file.");
 	}
-
-  int sockfd = writeMessage_ToHost_ReturnSocket(message, destination);
 
   char line [STRING_BUFFER_SIZE];
 	while ( fgets ( line, STRING_BUFFER_SIZE, f ) ){
@@ -125,20 +125,26 @@ void clientCopyToServer(char *fileName, char *destination, char *fileNameOnServe
 }
 
 void clientKill(char *_jid, char *mode, char *_gracePeriod){
-  char message[STRING_BUFFER_SIZE];
+  
   int jid = 0;
   if( (jid = atoi(_jid)) <= 0 ){
     error("Invalid job ID");
   }
+
   int gracePeriod = atoi(_gracePeriod);
+
   if(!(strncmp(mode, "soft", STRING_BUFFER_SIZE) == 0
     || strncmp(mode, "hard", STRING_BUFFER_SIZE) == 0
     || strncmp(mode, "nice", STRING_BUFFER_SIZE) == 0)){
       error("kill mode invalid");
     }
+
+	char message[STRING_BUFFER_SIZE];
   sprintf(message, "kill %d %s %d", jid, mode, gracePeriod);
+
   char response[STRING_BUFFER_SIZE];
   writeMessage_ToHost_GetResponse(message, NETWORK_MASTER, response);
+
   printf("%s\n", response);
 }
 
@@ -150,17 +156,20 @@ void serverRun(int sockfd, char ** paths, char **args){
     dup2(sockfd, STDIN_FILENO);
     dup2(sockfd, STDOUT_FILENO);
     dup2(sockfd, STDERR_FILENO);
+
     executeCommand(paths, args);
   }else if (pid > 0) {
-
     //create jobString to send to file
     char command[STRING_BUFFER_SIZE];
     concatenteStrings(args, command, STRING_BUFFER_SIZE);
+
     char hostName[STRING_BUFFER_SIZE];
     strncpy(hostName, getHostName(), STRING_BUFFER_SIZE);
+
     Job j = createJobNowPid(pid, hostName, command, INTERACTIVE, RUNNING);
     
     addJob(&j);
+
     char jobString[STRING_BUFFER_SIZE];
   	jobToString(&j, jobString);
 
@@ -171,11 +180,12 @@ void serverRun(int sockfd, char ** paths, char **args){
     }
 
     close(sockfd);
+
     // chnge job to finished with its jid
     if(WIFSIGNALED(status)){
-      j.state = TERMINATED;
+      j.state = TERMINATED; // if finished abnormally
     }else if(WIFEXITED(status)){
-      j.state = FINISHED;
+      j.state = FINISHED; // if finished properly
     }
     changeJob(&j);
   } else {
@@ -192,9 +202,11 @@ void serverSubmit(int sockfd, char **args){
   char *_time = args[1];
   shiftStrings(args);
   shiftStrings(args);
+
   struct tm t;
   sscanf(date, "%d/%d/%d", &t.tm_mday, &t.tm_mon, &t.tm_year);
   sscanf(_time, "%d:%d:%d", &t.tm_hour, &t.tm_min, &t.tm_sec);
+
   char command[STRING_BUFFER_SIZE];
   concatenteStrings(args, command, STRING_BUFFER_SIZE);
   char hostName[STRING_BUFFER_SIZE];
@@ -207,7 +219,9 @@ void serverSubmit(int sockfd, char **args){
   jobToString(&j, jobString);
 
   addBatchJob(&j);
+
   writeMessage_ToSocket("Acknowledged", sockfd);
+
   close(sockfd);
 }
 
@@ -234,9 +248,9 @@ void serverStatus(int sockfd){
 	while ( fgets ( line, STRING_BUFFER_SIZE, f )){
     if( strlen(line) > 2 ){
       Job j = stringToJob(line);
+
       char state[16];
       char type[16];
-      char buffer[STRING_BUFFER_SIZE * 4];
       switch(j.state){
         case WAITING: strncpy(state, "WAITING\t", STRING_BUFFER_SIZE); break;
         case RUNNING: strncpy(state, "RUNNING\t", STRING_BUFFER_SIZE); break;
@@ -247,9 +261,12 @@ void serverStatus(int sockfd){
         case INTERACTIVE: strncpy(type, "INTERACTIVE", STRING_BUFFER_SIZE); break;
         case BATCH: strncpy(type, "BATCH\t", STRING_BUFFER_SIZE); break;
       }
+
       char command[STRING_BUFFER_SIZE];
       strncpy(command, j.command, STRING_BUFFER_SIZE);
       command[strlen(command) - 1] = '\0'; // change '\n' to '\0' to not skip line
+
+      char buffer[STRING_BUFFER_SIZE * 4];
       sprintf(buffer, "%d\t\t%s\t\t%s\t\t%s\t%s\t%d/%d/%d\t%d:%d:%d\n",
         j.jid,
         j.host,
@@ -258,6 +275,7 @@ void serverStatus(int sockfd){
         state,
         j.dateTime.tm_mday, j.dateTime.tm_mon, j.dateTime.tm_year,
         j.dateTime.tm_hour, j.dateTime.tm_min, j.dateTime.tm_sec);
+
       writeMessage_ToSocket(buffer, sockfd);
     }
 	}
@@ -267,6 +285,7 @@ void serverStatus(int sockfd){
 
 void serverCopyFromClient(int sockfd, char *fileNameOnServer){
   remove(fileNameOnServer);
+
   FILE *f;
   if( !(f=fopen(fileNameOnServer, "wb")) ) {
     error("Error opening file.");
@@ -277,7 +296,9 @@ void serverCopyFromClient(int sockfd, char *fileNameOnServer){
   if (pid == 0) {
     // redirection of stdio
     dup2(fileno(f), STDOUT_FILENO);
+
     continuouslyReadAndPrintFromSocketUntilEnd(sockfd);
+
     fclose(f);
     exit(EXIT_SUCCESS);
   }else if (pid > 0) {
@@ -286,6 +307,7 @@ void serverCopyFromClient(int sockfd, char *fileNameOnServer){
     while( !(WIFSIGNALED(status) || WIFEXITED(status)) ){
       waitpid(pid, &status, WUNTRACED);
     }
+
     close(sockfd);
     fclose(f);
   } else {
@@ -325,14 +347,18 @@ void serverKill(int sockfd, char **args){
       kill(j->pid, SIGTERM);
       if(kill(j->pid, 0) == 0){
         writeMessage_ToSocket("Child did not die :/", sockfd);
+
         close(sockfd);
+
         return;
       }
     }else if(strncmp(mode, "hard", STRING_BUFFER_SIZE) == 0){
       kill(j->pid, SIGKILL);
     }else if(strncmp(mode, "soft", STRING_BUFFER_SIZE) == 0){
       kill(j->pid, SIGTERM);
+
       sleep(gracePeriod);
+
       if(kill(j->pid, 0) == 0){
         kill(j->pid, SIGKILL);
       }
@@ -341,7 +367,9 @@ void serverKill(int sockfd, char **args){
     removeJob(jid);
   }else{
     writeMessage_ToSocket("Process is already stopped", sockfd);
+
     close(sockfd);
+
     return;
   }
 
@@ -349,11 +377,6 @@ void serverKill(int sockfd, char **args){
   changeJob(j);
 
   writeMessage_ToSocket("Process beheaded", sockfd);
+
   close(sockfd);
-  // get job id, see if is valid
-  // if job id is valid:
-  //    if it is running, send appropriate signals
-  //    if it is wating, the remove it from batch processes
-  //    set job status to terminated
-  //    send appropriate message back to client sleep(x) x = grace period
 }

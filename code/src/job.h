@@ -25,7 +25,6 @@ typedef struct{
 } Job;
 
 Job *jobs; // batch jobs for this server
-Job *nextjob;
 int numberOfJobs;
 int numberOfBatchJobs;
 
@@ -37,13 +36,14 @@ void jobs_init(); // initialize semaphore
 void addBatchJob(Job *newJob); // insert item and sort, and set next job
 int getNoOfBatchJobs(); // safely get no of batch jobs
 void removeTopJob(); // remove the item at the last
-void removeJob(int jid);
+void removeJob(int jid); // remove job from batch jobs list
 void jobs_finish(); // do at exit
 
 void addJob(Job *newJob); // to the job file in the master // returns the job itself with a updted pid
 void changeJob(Job *job); // change a job state int he status file given the job
 Job *getJob(int jid); // get a job given its ID, returns null if not found
 
+// create a job, with different parameters
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime);
 Job createJob(char *host, char *command, Type type, JobState state, struct tm *dateTime);
 Job createJobNowPid(int pid, char *host, char *command, Type type, JobState state);

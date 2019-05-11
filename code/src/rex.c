@@ -47,12 +47,14 @@ void computeArgs(char** args){
 	}
 	else if(strncmp("submit", args[1], STRING_BUFFER_SIZE) == 0){
 		extractDestinationHard(args[2]);
+
     char dateTime[STRING_BUFFER_SIZE];
     extractTime(args[3], args[4], dateTime);
 		char message[STRING_BUFFER_SIZE];
 		strncpy(message, dateTime, STRING_BUFFER_SIZE);
 		strncat(message, " ", STRING_BUFFER_SIZE);
 		strncat(message, parameter, STRING_BUFFER_SIZE);
+
     clientSubmit(message, destination);
 	}else if(strncmp("copy", args[1], STRING_BUFFER_SIZE) == 0){
 		if(extractDestination(args[2]) && args[3]){

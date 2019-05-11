@@ -23,15 +23,13 @@ void addBatchJob(Job *newJob){
 
 	numberOfBatchJobs++;
 	jobs = (Job*)realloc( jobs, numberOfBatchJobs * sizeof(Job) );
+	jobs[numberOfBatchJobs - 1] = *(Job*)newJob;
 
-	if(numberOfBatchJobs > 1){
-		if( timeBiggerThan( &jobs[numberOfBatchJobs - 2].dateTime, &((Job*)newJob)->dateTime) ){
-			jobs[numberOfBatchJobs - 1] = *(Job*)newJob;
-		}else{
-			jobs[numberOfBatchJobs - 1] = jobs[numberOfBatchJobs - 2];
-		}
-	}else{
-		jobs[numberOfBatchJobs - 1] = *newJob;
+	// re-sort
+	for(int i = numberOfBatchJobs - 1; i > 0 && timeBiggerThan(&jobs[i].dateTime, &jobs[i-1].dateTime); ++i){
+		Job temp = jobs[i];
+		jobs[i] = jobs[i-1];
+		jobs[i-1] = temp;
 	}
 
 	sem_post(&batch_jobs_mutex);
@@ -48,13 +46,16 @@ int getNoOfBatchJobs(){
 
 void removeTopJob(){
 	sem_wait(&batch_jobs_mutex);
+
 	numberOfBatchJobs--;
 	jobs = (Job*)realloc( jobs,  numberOfBatchJobs * sizeof(Job) );
+
 	sem_post(&batch_jobs_mutex);
 }
 
 void removeJob(int jid){
 	sem_wait(&batch_jobs_mutex);
+
 	for(int i = 0; i < numberOfBatchJobs; ++i){
 		if(jobs[i].jid == jid){
 			for(int j = i+1; j < numberOfBatchJobs; ++j){
@@ -63,22 +64,22 @@ void removeJob(int jid){
 			break;
 		}
 	}
+
 	numberOfBatchJobs--;
 	jobs = (Job*)realloc( jobs,  numberOfBatchJobs * sizeof(Job) );
+
 	sem_post(&batch_jobs_mutex);
 }
 
 void addJob(Job *newJob){
 	sem_wait(&jobs_mutex);
-	sem_wait(&batch_jobs_mutex);
-	
-	Job *j = newJob;
 	
 	numberOfJobs++;
+
+	Job *j = newJob;
 	j->jid = numberOfJobs;
 
 	FILE *f;
-
 	char fileName[STRING_BUFFER_SIZE];
 	sprintf(fileName, "%s/%s", serverStartingCWD, JOBS_FILENAME);
 	if( !(f=fopen(fileName, "a")) ) {
@@ -91,13 +92,12 @@ void addJob(Job *newJob){
 	fputs(jobString, f);
 
 	fclose(f);
-	sem_post(&batch_jobs_mutex);
+
 	sem_post(&jobs_mutex);
 }
 
 void changeJob(Job *job){
 	sem_wait(&jobs_mutex);
-	sem_wait(&batch_jobs_mutex);
 
 	// read file line by line until jid is found
 	// output each line to temp, unless jid matches jobID, then change it and write it
@@ -143,7 +143,6 @@ void changeJob(Job *job){
 	rename(temporaryFileName, fileName);
 
 	sem_post(&jobs_mutex);
-	sem_post(&batch_jobs_mutex);
 }
 
 Job *getJob(int jid){
@@ -169,12 +168,8 @@ Job *getJob(int jid){
 	}
 
 	sem_post(&jobs_mutex);
-	return NULL;
-}
 
-void jobs_finish(){
-	sem_destroy(&batch_jobs_mutex);
-	sem_destroy(&jobs_mutex);
+	return NULL; // return NULL if job was not found
 }
 
 Job createJobPid(int pid, char *host, char *command, Type type, JobState state, struct tm *dateTime){
